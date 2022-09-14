@@ -1,13 +1,14 @@
 [package]
-name = "RayTrack"
+name = "ray_track"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-building-blocks = "0.7.1"
-fbxcel-dom = "0.0.9"
-cgmath = "0.18.0"
+image = "0.24.3"
+euler = "0.4.0"
 bvh = "0.6.0"
 progress_bar = "1.0.2"
+PMXUtil = "0.9.0"
+rand="0.3.17"
