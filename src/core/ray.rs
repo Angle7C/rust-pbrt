@@ -9,7 +9,7 @@ pub struct Ray {
     pub d: Vec3,
     pub t_max: f32,
     pub time: f32,
-    pub medium: Option<Box<Medium>>,
+    pub medium: Option<Rc<Medium>>,
 }
 pub trait RayAble {
     fn at(&self, t: f32) -> Point3;
@@ -25,7 +25,7 @@ impl Ray {
             medium: (None),
         }
     }
-    pub fn new(o: Point3, d: Vec3, t_max: f32, time: f32, medium: Option<Box<Medium>>) -> Self {
+    pub fn new(o: Point3, d: Vec3, t_max: f32, time: f32, medium: Option<Rc<Medium>>) -> Self {
         Self {
             o: o,
             d: d,
@@ -68,7 +68,7 @@ impl RayDifferential {
         d: Vec3,
         t_max: f32,
         time: f32,
-        medium: Option<Box<Medium>>,
+        medium: Option<Rc<Medium>>,
         x_o: Point3,
         y_o: Point3,
         x_dir: Vec3,
