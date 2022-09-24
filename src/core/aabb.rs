@@ -73,7 +73,7 @@ impl Bounds3 {
             && p.z <= self.max.z;
     }
     pub fn expend(&self, det: Point3) -> Self {
-        Self::new((self.min - det), (self.max + det))
+        Self::new(self.min - det, self.max + det)
     }
     pub fn diagonal(&self) -> Vec3 {
         self.max - self.min
@@ -97,6 +97,10 @@ impl Bounds3 {
         let z = if i & 4 == 0 { self.min.z } else { self.max.z };
         Vec3::new(x, y, z)
     }
+    pub fn area(&self)->f32{
+        let det=self.max-self.min;
+        det.x.abs()*det.y.abs()
+    }
 }
 
 pub struct Bounds2 {
@@ -104,6 +108,10 @@ pub struct Bounds2 {
     pub max: Point2,
 }
 impl Bounds2 {
+    pub fn area(&self)->f32{
+        let det=self.max-self.min;
+        det.x.abs()*det.y.abs()
+    }
     pub fn init() -> Self {
         Self {
             min: (Point2::new(f32::INFINITY, f32::INFINITY)),
@@ -173,7 +181,7 @@ impl Bounds2 {
             // && p.z <= self.max.z;
     }
     pub fn expend(&self, det: Point2) -> Self {
-        Self::new((self.min - det), (self.max + det))
+        Self::new(self.min - det, self.max + det)
     }
     pub fn diagonal(&self) -> Vec2 {
         self.max - self.min
@@ -203,7 +211,7 @@ mod test {
     use super::Bounds3;
     use crate::extends::Vec3;
     #[test]
-    pub fn get_ound() {
+    pub fn get_bound() {
         let bound = Bounds3::new(Vec3::new(1.0, 3.0, 5.0), Vec3::new(2.0, 4.0, 6.0));
         for i in 0..8 {
             println!("{:?}", bound.rang_point(i));

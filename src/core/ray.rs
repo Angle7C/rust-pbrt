@@ -25,10 +25,16 @@ impl Ray {
             medium: (None),
         }
     }
+    pub fn init_o_dir(o: Point3, d: Vec3) -> Self {
+        let mut ray = Self::init();
+        ray.o = o;
+        ray.d = d.normalize();
+        ray
+    }
     pub fn new(o: Point3, d: Vec3, t_max: f32, time: f32, medium: Option<Rc<Medium>>) -> Self {
         Self {
             o: o,
-            d: d,
+            d: d.normalize(),
             t_max: t_max,
             time: time,
             medium: medium,
@@ -63,6 +69,12 @@ impl RayDifferential {
             has_differentials: false,
         }
     }
+    pub fn new_o_dir(o: Point3, dir: Vec3) -> Self {
+        let mut ray = RayDifferential::init();
+        ray.main_ray.o = o;
+        ray.main_ray.d = dir;
+        ray
+    }
     pub fn new(
         o: Point3,
         d: Vec3,
@@ -73,7 +85,7 @@ impl RayDifferential {
         y_o: Point3,
         x_dir: Vec3,
         y_dir: Vec3,
-        has :bool,
+        has: bool,
     ) -> Self {
         Self {
             main_ray: Ray::new(o, d, t_max, time, medium),
@@ -81,7 +93,7 @@ impl RayDifferential {
             y_ray_o: y_o,
             x_ray_dir: x_dir,
             y_ray_dir: y_dir,
-            has_differentials:has
+            has_differentials: has,
         }
     }
     pub fn scale_differentials(&mut self, s: f32) {
@@ -89,5 +101,8 @@ impl RayDifferential {
         self.y_ray_o = self.y_ray_o + (self.y_ray_o - self.main_ray.o) * s;
         self.x_ray_dir = self.x_ray_dir + (self.x_ray_dir - self.main_ray.d) * s;
         self.x_ray_dir = self.y_ray_dir + (self.x_ray_dir - self.main_ray.d) * s;
+    }
+    pub fn set_differentials(&mut self,value:bool){ 
+        self.has_differentials=value;
     }
 }

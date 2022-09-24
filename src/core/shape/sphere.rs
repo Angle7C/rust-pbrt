@@ -17,14 +17,13 @@ pub struct Sphere {
 impl Sphere {
     pub fn new(
         object_to_world: Mat4,
-        world_to_object: Mat4,
         reverse_orientation: bool,
         radius: f32,
         z_min: f32,
         z_max: f32,
         phi_max: f32,
     ) -> Self {
-        let base = BaseShape::new(object_to_world, world_to_object, reverse_orientation);
+        let base = BaseShape::new(object_to_world, reverse_orientation);
         let z_min = z_min.min(z_max).clamp(-radius, radius);
         let z_max = z_min.max(z_max).clamp(-radius, radius);
         let theta_min = ((z_min.min(z_max) / radius).clamp(-1.0, 1.0)).acos();
@@ -46,6 +45,7 @@ impl Sphere {
         self.radius * self.phi_max * (self.z_max - self.z_min)
     }
     fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction> {
+        let ray=self.obj_to_world().applying_ray_inv(ray);
         let a = ray.d.x * ray.d.x + ray.d.y * ray.d.y + ray.d.z * ray.d.z;
         let b = 2.0 * (ray.d.x * ray.o.x + ray.d.y * ray.o.y + ray.d.z * ray.o.z);
         let c =
@@ -67,31 +67,6 @@ impl Sphere {
                 Point3::ZERO,
                 Point3::ZERO,
             ))
-            // let mut hit_t = t0;
-            // if hit_t < 0.0 {
-            //     hit_t = t1;
-            //     if hit_t > ray.t_max {
-            //         return None;
-            //     }
-            // };
-            // let mut hit_p = ray.at(hit_t);
-            // hit_p = hit_p * (self.radius / hit_p.distance(Point3::ZERO));
-            // if hit_p.x == 0.0 && hit_p.y == 0.0 {
-            //     hit_p.x = 1e-5 * self.radius;
-            // };
-            // let mut phi = hit_p.y.atan2(hit_p.x);
-            // if phi < 0.0 {
-            //     phi += 2.0 * PI;
-            // };
-       
-            // // if (self.z_min>-self.radius&&hit_p.z<self.z_min)||(self.z_max<self.radius&&hit_p.z>self.z_max)||phi>self.phi_max{
-
-            // // };
-            // // let u=phi/self.phi_max;
-            // // let theta=(hit_p.z/self.radius).clamp(-1.0, 1.0).acos();
-            // // let v=(theta-self.theta_max)/(self.theta_max-self.theta_min);
-            // // let
-            // // todo!();
         } else {
             None
         }
@@ -99,7 +74,7 @@ impl Sphere {
     fn intersect_p(&self, ray: &Ray) -> Option<SurfaceInteraction> {
         self.intersect(ray)
     }
-    fn obj_to_world(&self) -> Mat4 {
+    fn obj_to_world(&self) -> Transform {
         self.shape.obj_to_world
     }
     fn object_world_bound(&self) -> Bounds3 {
@@ -130,13 +105,13 @@ impl Sphere {
         let mut it = Interaction::init();
         it.normal = self
             .obj_to_world()
-            .transform_vector3(Vec3::new(p_obj.x, p_obj.y, p_obj.z))
+            .applying_point(Vec3::new(p_obj.x, p_obj.y, p_obj.z))
             .normalize();
         if self.reverse_orientation() {
             it.normal = -it.normal;
         }
         p_obj = p_obj * (self.radius / p_obj.distance(Point3::ZERO));
-        it.p = self.obj_to_world().transform_point3(p_obj);
+        it.p = self.obj_to_world().applying_point(p_obj);
         let pdf = 1.0 / self.area();
         (it, pdf)
     }
@@ -146,8 +121,5 @@ impl Sphere {
     fn transform_swap_handedness(&self) -> bool {
         false
         
-    }
-    fn world_to_object(&self) -> Mat4 {
-        self.shape.world_to_object
     }
 }
