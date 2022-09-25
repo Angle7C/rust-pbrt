@@ -34,8 +34,8 @@ impl Sphere {
         let base = BaseShape::new(object_to_world, reverse_orientation);
         let z_min = z_min.min(z_max).clamp(-radius, radius);
         let z_max = z_min.max(z_max).clamp(-radius, radius);
-        let theta_max = ((z_min.min(z_max) / radius).clamp(-1.0, 1.0)).acos();
-        let theta_min = ((z_min.max(z_max) / radius).clamp(-1.0, 1.0)).acos();
+        let theta_min = ((z_min.min(z_max) / radius).clamp(-1.0, 1.0)).acos();
+        let theta_max = ((z_min.max(z_max) / radius).clamp(-1.0, 1.0)).acos();
         let phi_max = (phi_max/180.0*PI).clamp(0.0, 2.0*PI);
         Self {
             shape: (base),
@@ -64,7 +64,38 @@ impl BaseShapeAble for Sphere {
                 return None;
             };
             let mut t = t0;
+            if t<0.0{
+                t=t1;
+                if t>ray.t_max{
+                    return None;
+                }
+            }
             let mut point = ray.at(t);
+            if point.x==0.0&&point.y==0.0{
+                point.x=1e-5*self.radius;
+            }
+            let mut phi=point.y.atan2(point.x);
+            if phi<0.0{
+                phi+=2.0*PI;
+            }
+            if (self.z_min>-self.radius&&point.z<self.z_min)||(self.z_max<self.radius&&point.z>self.z_max)||phi>self.phi_max{
+                if t==t1||t1>ray.t_max{
+                    return None;
+                }
+                t=t1;
+                point=ray.at(t);
+                if point.x==0.0&&point.y==0.0{
+                    point.x=1e-5*self.radius;
+                }
+                 phi=point.y.atan2(point.x);
+                if phi<0.0{
+                    phi+=2.0*PI;
+                }
+                if (self.z_min>-self.radius&&point.z<self.z_min)||(self.z_max<self.radius&&point.z>self.z_max)||phi>self.phi_max{
+                    return None
+                }
+                
+            }
             let point=self.obj_to_world().applying_point(point);
             let d=self.obj_to_world().applying_vector(ray.d);
             let normal=self.obj_to_world().applying_vector(point);

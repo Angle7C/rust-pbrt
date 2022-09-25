@@ -10,7 +10,7 @@ mod test {
     fn test_camera_perspective() {
         let mut film = Film::new(Vec2::new(200.0, 200.0), "test_camear.png");
         let mut camera = PerspectiveCamera::new(
-            Mat4::look_at_lh(Vec3::X*3.0, Vec3::ZERO, Vec3::Y),
+            Mat4::look_at_lh(Vec3::ONE*3.0, Vec3::ZERO, Vec3::Y),
             Bounds2::new(Vec2::new(-2.0, -2.0), Vec2::new(2.0, 2.0)),
             0.0,
             1.0,

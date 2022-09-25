@@ -1,5 +1,6 @@
 use std::{f32::consts::PI, rc::Rc};
 pub mod sphere;
+pub mod cylinders;
 use crate::{
     core::{
         aabb::Bounds3,

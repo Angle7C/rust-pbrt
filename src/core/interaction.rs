@@ -34,7 +34,7 @@ impl Interaction {
             p: (p),
             time: (t),
             wo: (w),
-            normal: (normal),
+            normal: (normal).normalize(),
             medium: None,
         }
     }
