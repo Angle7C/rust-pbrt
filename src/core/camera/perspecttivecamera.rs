@@ -81,8 +81,8 @@ fn We(
        }
        ray.time=lerp(sampler.time, self.get_shutter_open(), self.get_shutter_close());
        ray.medium=self.get_medium();
-       ray.o =self.get_camera_to_world().applying_point(ray.o);
-       ray.d=self.get_camera_to_world().applying_vector(ray.d).normalize();
+       ray.o =self.get_camera_to_world().applying_point_inv(ray.o);
+       ray.d=self.get_camera_to_world().applying_vector_inv(ray.d).normalize();
        (Some(ray),1.0)
     }
     fn generate_ray_differebtial(

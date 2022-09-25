@@ -26,8 +26,10 @@ mod test {
                 ray.o = Point3::new(u, v, -2.0);
                 match sphere.intersect(&ray) {
                     None => continue,
-                    _ => {
-                        *image.get_pixel_mut(i as u32, j as u32) = image::Rgb([255, 0, 0]);
+                    Some(ref v) => {
+                        let color = (v.normal + Vec3::ONE) * 0.5 * 255.0;
+                        *image.get_pixel_mut(i as u32, j as u32) =
+                            image::Rgb([color.x as u8, color.y as u8, color.z as u8])
                     }
                 }
             }

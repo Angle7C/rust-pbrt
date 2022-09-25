@@ -84,7 +84,7 @@ impl Transform{
         let d=self.applying_vector(ray.d);
         Ray::init_o_dir(o, d)
     }
-    pub fn applying_box_3(&self,bounds:&mut Bounds3)->Bounds3{
+    pub fn applying_box_3(&self,bounds:&Bounds3)->Bounds3{
         let mut init=Bounds3::init_point(self.inv_trans.transform_point3( bounds.rang_point(0)));
         for i in 1..8{
             init=init.union_point(self.inv_trans.transform_point3(bounds.rang_point(i)));

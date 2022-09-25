@@ -5,16 +5,24 @@ use crate::{
     until::untils::quadratic,
 };
 
+///定义在参数坐标系的球体，u，v ->(0,1)
 pub struct Sphere {
     shape: BaseShape,
+    ///球体半径
     pub radius: f32,
+    /// y轴最小范围角
     pub theta_min: f32,
+    /// y轴最大范围角
     pub theta_max: f32,
+    /// 平面范围角
     pub phi_max: f32,
+    //最小高度
     pub z_min: f32,
+    //最大高度
     pub z_max: f32,
 }
 impl Sphere {
+    ///构造函数
     pub fn new(
         object_to_world: Mat4,
         reverse_orientation: bool,
@@ -26,9 +34,9 @@ impl Sphere {
         let base = BaseShape::new(object_to_world, reverse_orientation);
         let z_min = z_min.min(z_max).clamp(-radius, radius);
         let z_max = z_min.max(z_max).clamp(-radius, radius);
-        let theta_min = ((z_min.min(z_max) / radius).clamp(-1.0, 1.0)).acos();
-        let theta_max = ((z_min.max(z_max) / radius).clamp(-1.0, 1.0)).acos();
-        let phi_max = phi_max.clamp(0.0, 360.0);
+        let theta_max = ((z_min.min(z_max) / radius).clamp(-1.0, 1.0)).acos();
+        let theta_min = ((z_min.max(z_max) / radius).clamp(-1.0, 1.0)).acos();
+        let phi_max = (phi_max/180.0*PI).clamp(0.0, 2.0*PI);
         Self {
             shape: (base),
             radius: (radius),
@@ -40,12 +48,12 @@ impl Sphere {
         }
     }
 }
- impl BaseShapeAble for Sphere {
+impl BaseShapeAble for Sphere {
     fn area(&self) -> f32 {
         self.radius * self.phi_max * (self.z_max - self.z_min)
     }
-    fn intersect(&self, ray: &Ray) -> Option<SurfaceInteraction> {
-        let ray=self.obj_to_world().applying_ray_inv(ray);
+    fn intersect(&self, ray: &Ray) -> Option<Interaction> {
+        let ray = self.obj_to_world().applying_ray_inv(ray);
         let a = ray.d.x * ray.d.x + ray.d.y * ray.d.y + ray.d.z * ray.d.z;
         let b = 2.0 * (ray.d.x * ray.o.x + ray.d.y * ray.o.y + ray.d.z * ray.o.z);
         let c =
@@ -55,24 +63,18 @@ impl Sphere {
             if t0 >= ray.t_max || t1 < 0.0 {
                 return None;
             };
-            Some(SurfaceInteraction::init(
-                Point3::ZERO,
-                0.0,
-                Point3::ZERO,
-                Point3::ZERO,
-                None,
-                UV::ZERO,
-                Point3::ZERO,
-                Point3::ZERO,
-                Point3::ZERO,
-                Point3::ZERO,
-            ))
+            let mut t = t0;
+            let mut point = ray.at(t);
+            let point=self.obj_to_world().applying_point(point);
+            let d=self.obj_to_world().applying_vector(ray.d);
+            let normal=self.obj_to_world().applying_vector(point);
+            Some(Interaction::new(point, t, d, normal))
         } else {
             None
         }
     }
     fn intersect_p(&self, ray: &Ray) -> Option<SurfaceInteraction> {
-        self.intersect(ray)
+        None
     }
     fn obj_to_world(&self) -> Transform {
         self.shape.obj_to_world
@@ -90,15 +92,13 @@ impl Sphere {
         )
     }
     fn pdf(&self, interaction: &Interaction) -> f32 {
-        1.0/self.area()
+        1.0 / self.area()
     }
     fn pdf_iter(&self, interaction: &Interaction, wi: &Vec3) -> f32 {
-        1.0/self.area()
-        
+        1.0 / self.area()
     }
     fn reverse_orientation(&self) -> bool {
-        false
-        
+        self.shape.reverse_orientation
     }
     fn sample(&self, u: &Point2) -> (Interaction, f32) {
         let mut p_obj = Point3::ZERO + self.radius * Sample::sphere_sample_uniform(u);
@@ -119,7 +119,6 @@ impl Sphere {
         self.sample(u)
     }
     fn transform_swap_handedness(&self) -> bool {
-        false
-        
+        self.shape.transform_swap_handedness
     }
 }
