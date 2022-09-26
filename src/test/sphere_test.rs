@@ -4,7 +4,6 @@ mod test {
         core::{
             ray::Ray,
             shape::{sphere::Sphere, BaseShapeAble},
-            *,
         },
         extends::{Mat4, Point3, Vec3},
     };
@@ -17,8 +16,8 @@ mod test {
         const HEIGHT: i32 = 100;
         let mut ray = Ray::new(Point3::ZERO, Vec3::Z, 200.0, 0.0, None);
         let mut image = image::RgbImage::new(WIDTH as u32, HEIGHT as u32);
-        let mut u = 0.0;
-        let mut v = 0.0;
+        let mut u: f32;
+        let mut v: f32;
         for i in 0..WIDTH {
             for j in 0..HEIGHT {
                 u = (i - WIDTH / 2) as f32 / WIDTH as f32;

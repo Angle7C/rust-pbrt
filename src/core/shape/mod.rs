@@ -58,12 +58,12 @@ pub trait BaseShapeAble {
     ///采样交点，并返回相应的 交互信息与pdf
     fn sample(&self, u: &Point2) -> (Interaction,f32);
     ///返回对应的 概率分布
-    fn pdf(&self, interaction: &Interaction) -> f32 {
+    fn pdf(&self, _interaction: &Interaction) -> f32 {
         1.0 / self.area()
     }
     ///返回对应的 概率分布
     fn pdf_iter(&self, interaction: &Interaction, wi: &Vec3) -> f32;
-    fn sample_inter(&self, interaction: &Interaction, u: &Point2) -> (Interaction,f32) {
+    fn sample_inter(&self, _interaction: &Interaction, u: &Point2) -> (Interaction,f32) {
         self.sample(u)
     }
     //获取相应的变换矩阵

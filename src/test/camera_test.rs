@@ -1,16 +1,14 @@
+#[cfg(test)]
 mod test {
     use crate::{
         core::{
             aabb::Bounds2,
             camera::{perspecttivecamera::PerspectiveCamera, CameraAble},
             film::Film,
-            ray::Ray,
-            shape::{sphere::Sphere, BaseShapeAble},
             *,
         },
         extends::*,
     };
-    use std::f32::consts::PI;
     #[test]
     fn test_camera() {
         let film = Film::new(Vec2::new(100.0, 100.0), "test_camear");
@@ -26,7 +24,7 @@ mod test {
             &film,
             None,
         );
-        let (ray,_) = camera.generate_ray(&sampler);
+        let (_,_) = camera.generate_ray(&sampler);
         
     }
 }

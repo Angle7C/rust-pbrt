@@ -76,7 +76,7 @@ impl BaseShapeAble for Cylinders {
             if phi < 0.0 {
                 phi += 2.0 * PI;
             };
-            if (point.z < self.z_min || point.z > self.z_max || phi > self.phi_max) {
+            if point.z < self.z_min || point.z > self.z_max || phi > self.phi_max {
                 if t == t1 || t1 > ray.t_max {
                     return None;
                 }
@@ -93,8 +93,8 @@ impl BaseShapeAble for Cylinders {
                     return None;
                 }
             }
-            let u = phi / self.phi_max;
-            let v = (point.z - self.z_min) / (self.z_max - self.z_min);
+            let _u = phi / self.phi_max;
+            let _v = (point.z - self.z_min) / (self.z_max - self.z_min);
             let dpdu = Vec3::new(-self.phi_max * point.y, self.phi_max * point.x, 0.0);
             let dpdv = Vec3::new(0.0, 0.0, self.z_max - self.z_min);
             // let d2pduu=-self.phi_max*self.phi_max*Vec3::new(point.x, point.y, 0.0);
@@ -109,22 +109,22 @@ impl BaseShapeAble for Cylinders {
             None
         }
     }
-    fn intersect_p(&self, ray: &Ray) -> Option<SurfaceInteraction> {
+    fn intersect_p(&self, _ray: &Ray) -> Option<SurfaceInteraction> {
         None
     }
     fn area(&self) -> f32 {
         (self.z_max - self.z_min) * self.radius * self.phi_max
     }
-    fn pdf(&self, interaction: &Interaction) -> f32 {
+    fn pdf(&self, _interaction: &Interaction) -> f32 {
         0.0
     }
-    fn pdf_iter(&self, interaction: &Interaction, wi: &Vec3) -> f32 {
+    fn pdf_iter(&self, interaction: &Interaction, _wi: &Vec3) -> f32 {
         self.pdf(interaction)
     }
-    fn sample(&self, u: &Point2) -> (Interaction, f32) {
+    fn sample(&self, _u: &Point2) -> (Interaction, f32) {
         (Interaction::init(), 0.0)
     }
-    fn sample_inter(&self, interaction: &Interaction, u: &Point2) -> (Interaction, f32) {
+    fn sample_inter(&self, _interaction: &Interaction, u: &Point2) -> (Interaction, f32) {
         self.sample(u)
     }
 }
@@ -141,7 +141,7 @@ mod test {
     use super::Cylinders;
     #[test]
     fn test_camera_perspective() {
-        let mut film = Film::new(Vec2::new(200.0, 200.0), "cylinders.png");
+        let mut film = Film::new(Vec2::new(260.0, 600.0), "cylinders.png");
         let mut camera = PerspectiveCamera::new(
             Mat4::look_at_lh(Vec3::Y*2.0, Vec3::ZERO, Vec3::X),
             Bounds2::new(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0)),
@@ -154,7 +154,6 @@ mod test {
             None,
         );
         let cylinders = Cylinders::new(Mat4::IDENTITY, false, 0.5, 0.0, 1.0, 360.0);
-        let color = &RGBSpectrum::new(255.0, 0.0, 0.0);
         while let Some(v) = camera.next(&film) {
             if let (Some(ref ray), _) = camera.generate_ray(&v) {
                 let t = cylinders.intersect(ray);

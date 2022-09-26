@@ -1,5 +1,3 @@
-use hexasphere::shapes;
-
 use super::*;
 use crate::{core::ray::RayAble, extends::*};
 pub struct Disk {
@@ -10,7 +8,7 @@ pub struct Disk {
     pub phi_max: f32,
 }
 impl Disk {
-    fn new(
+    pub fn new(
         obj_to_world: Mat4,
         reverser_orientation: bool,
         radius: f32,
@@ -24,7 +22,7 @@ impl Disk {
             radius: radius,
             inner_radius: inner_radius,
             height: height,
-            phi_max: (phi_max/180.0*PI).clamp(0.0, 2.0*PI),
+            phi_max: (phi_max / 180.0 * PI).clamp(0.0, 2.0 * PI),
         }
     }
 }
@@ -67,24 +65,24 @@ impl BaseShapeAble for Disk {
         let point = self.obj_to_world().applying_point(p);
         let w = self.obj_to_world().applying_vector(ray.d);
         let normal = self.obj_to_world().applying_vector(Vec3::Z);
-        Some(Interaction::new(p, t, w, normal))
+        Some(Interaction::new(point, t, w, normal))
     }
-    fn intersect_p(&self, ray: &Ray) -> Option<SurfaceInteraction> {
+    fn intersect_p(&self, _ray: &Ray) -> Option<SurfaceInteraction> {
         None
     }
-    fn pdf(&self, interaction: &Interaction) -> f32 {
+    fn pdf(&self, _interaction: &Interaction) -> f32 {
         0.0
     }
-    fn pdf_iter(&self, interaction: &Interaction, wi: &Vec3) -> f32 {
+    fn pdf_iter(&self, interaction: &Interaction, _wi: &Vec3) -> f32 {
         self.pdf(interaction)
     }
     fn reverse_orientation(&self) -> bool {
         self.shape.reverse_orientation
     }
-    fn sample(&self, u: &Point2) -> (Interaction, f32) {
+    fn sample(&self, _u: &Point2) -> (Interaction, f32) {
         todo!()
     }
-    fn sample_inter(&self, interaction: &Interaction, u: &Point2) -> (Interaction, f32) {
+    fn sample_inter(&self, _interaction: &Interaction, _u: &Point2) -> (Interaction, f32) {
         todo!()
     }
     fn transform_swap_handedness(&self) -> bool {
@@ -104,7 +102,7 @@ mod test {
     use super::Disk;
     #[test]
     fn test_camera_perspective() {
-        let mut film = Film::new(Vec2::new(200.0, 200.0), "Disk.png");
+        let mut film = Film::new(Vec2::new(2000.0, 2000.0), "Disk.png");
         let mut camera = PerspectiveCamera::new(
             Mat4::look_at_lh(Vec3::Z * 1.0, Vec3::ZERO, Vec3::Y),
             Bounds2::new(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0)),
@@ -116,8 +114,7 @@ mod test {
             &film,
             None,
         );
-        let cylinders = Disk::new(Mat4::IDENTITY, false, 0.5, 0.1, 0.0, 360.0);
-        let color = &RGBSpectrum::new(255.0, 0.0, 0.0);
+        let cylinders = Disk::new(Mat4::IDENTITY, false, 0.5, 0.49, 0.0, 360.0);
         while let Some(v) = camera.next(&film) {
             if let (Some(ref ray), _) = camera.generate_ray(&v) {
                 let t = cylinders.intersect(ray);

@@ -104,7 +104,7 @@ impl BaseShapeAble for Sphere {
             None
         }
     }
-    fn intersect_p(&self, ray: &Ray) -> Option<SurfaceInteraction> {
+    fn intersect_p(&self, _ray: &Ray) -> Option<SurfaceInteraction> {
         None
     }
     fn obj_to_world(&self) -> Transform {
@@ -122,10 +122,10 @@ impl BaseShapeAble for Sphere {
             Point3::new(self.radius, self.radius, self.z_max),
         )
     }
-    fn pdf(&self, interaction: &Interaction) -> f32 {
+    fn pdf(&self, _interaction: &Interaction) -> f32 {
         1.0 / self.area()
     }
-    fn pdf_iter(&self, interaction: &Interaction, wi: &Vec3) -> f32 {
+    fn pdf_iter(&self, _interaction: &Interaction, _wi: &Vec3) -> f32 {
         1.0 / self.area()
     }
     fn reverse_orientation(&self) -> bool {
@@ -146,7 +146,7 @@ impl BaseShapeAble for Sphere {
         let pdf = 1.0 / self.area();
         (it, pdf)
     }
-    fn sample_inter(&self, interaction: &Interaction, u: &Point2) -> (Interaction, f32) {
+    fn sample_inter(&self, _interaction: &Interaction, u: &Point2) -> (Interaction, f32) {
         self.sample(u)
     }
     fn transform_swap_handedness(&self) -> bool {
