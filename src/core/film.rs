@@ -1,21 +1,15 @@
 //Film用来表示最终的图像。
 
 use super::{
-    aabb::{Bounds2, Bounds3},
-    filter::FilterAble,
+    aabb::Bounds2,
     spectrum::RGBSpectrum,
 };
-use crate::extends::{Point2, Vec2};
+use crate::extends::{Point2};
 use image::Rgb;
 pub struct Pixel {
     pub xyz: [f32; 3],
     pub filter_weight_sum: f32,
     pub pad: f32,
-}
-struct FileTilePixel {
-    filter_weight_sum: f32,
-    index: i32,
-    // contrib_sum Soectrum,
 }
 impl Pixel {
     pub fn init() -> Self {
@@ -37,7 +31,7 @@ impl FilmTile {
 }
 pub struct Film {
     //图片像素
-    pub full_Resolution: Point2,
+    pub full_resolution: Point2,
     //图片名称
     pub filename: &'static str,
     //像素存储
@@ -49,23 +43,23 @@ impl Film {
     pub fn new(resolution: Point2, filename: &'static str) -> Self {
         let pixel = image::RgbImage::new(resolution.x as u32, resolution.y as u32);
         Self {
-            full_Resolution: (resolution),
+            full_resolution: (resolution),
             filename: (filename),
             pixels: (pixel),
             index: 0,
         }
     }
     #[inline]
-    pub fn set_pixel(&mut self, i: u32, j: u32, RGB: &RGBSpectrum) {
+    pub fn set_pixel(&mut self, i: u32, j: u32, rgb: &RGBSpectrum) {
         let pixel = self.pixels.get_pixel_mut(i, j);
-        *pixel = RGB.to_rgb();
+        *pixel = rgb.to_rgb();
     }
     #[inline]
     pub fn get_width(&self) -> u32 {
-        self.full_Resolution.x as u32
+        self.full_resolution.x as u32
     }
     pub fn get_height(&self) -> u32 {
-        self.full_Resolution.y as u32
+        self.full_resolution.y as u32
     }
     pub fn get_pixel(&mut self, x: u32, y: u32) -> &mut Rgb<u8> {
         self.pixels.get_pixel_mut(x, y)
@@ -92,11 +86,11 @@ pub trait FilmAble {
 impl Iterator for Film {
     type Item = FilmTile;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index < self.full_Resolution.x as usize * self.full_Resolution.y as usize {
+        if self.index < self.full_resolution.x as usize * self.full_resolution.y as usize {
             self.index += 1;
-            let x = self.index / self.full_Resolution.x as usize;
-            let y = self.index % self.full_Resolution.x as usize;
-            let rgb = self.pixels.get_pixel_mut(x as u32, y as u32);
+            let x = self.index / self.full_resolution.x as usize;
+            let y = self.index % self.full_resolution.x as usize;
+            
             Some(FilmTile::new(x as u32, y as u32))
         } else {
             None

@@ -15,5 +15,4 @@ pub mod texture;
 pub mod spectrum;
 pub mod interaction;
 pub mod primitives;
-pub mod arealight;
 pub mod scene;

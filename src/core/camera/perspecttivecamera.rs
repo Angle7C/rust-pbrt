@@ -1,4 +1,4 @@
-use std::{rc::Rc, collections::btree_map::Iter};
+use std::{rc::Rc};
 
 use crate::{
     core::{aabb::Bounds2, medium::Medium, film::Film, ray::{Ray, RayAble, RayDifferential}, sample::{Sample, CameraSample}, spectrum::RGBSpectrum},
@@ -41,7 +41,7 @@ impl PerspectiveCamera {
         let dx_camera=perspective_camera.camera_to_raster.applying_vector_inv(Vec3::X);
         let dy_camera=perspective_camera.camera_to_raster.applying_vector_inv(Vec3::Y);
         //
-        let res=film.full_Resolution;
+        let res=film.full_resolution;
         //在z=1是的图像平面
         let p_min=perspective_camera.camera_to_raster.applying_point_inv(Vec3::ZERO);
         let p_max=perspective_camera.camera_to_raster.applying_point_inv(Point3::new(res.x,res.y,0.0));
@@ -49,11 +49,11 @@ impl PerspectiveCamera {
         Self { projective_camera: (perspective_camera.into()), dx_camera: (dx_camera.into()), dy_camera: (dy_camera.into()), a: (area.into()),index:0 }
     }
     pub fn next(&mut self,film :&Film)->Option< CameraSample>{
-        if self.index as f32 >=film.full_Resolution.x*film.full_Resolution.y{
+        if self.index as f32 >=film.full_resolution.x*film.full_resolution.y{
            return None
         }
-        let x=self.index/film.full_Resolution.x as u32;
-        let y=self.index%film.full_Resolution.x as u32;
+        let x=self.index/film.full_resolution.x as u32;
+        let y=self.index%film.full_resolution.x as u32;
         self.index+=1;
         Some(CameraSample::new(Point2::new(x as f32,y as f32), 0.0))
     }
@@ -61,8 +61,8 @@ impl PerspectiveCamera {
 impl CameraAble for PerspectiveCamera {
 fn We(
         &self,
-        ray: &crate::core::ray::Ray,
-        p_raster2: Option<crate::extends::Point2>,
+        _ray: &crate::core::ray::Ray,
+        _p_raster2: Option<crate::extends::Point2>,
     ) -> crate::core::spectrum::RGBSpectrum {
         RGBSpectrum::new(0.0, 0.0, 0.0)
     }
@@ -120,8 +120,8 @@ fn We(
         } else {
             ray_different.x_ray_o = ray.o ;
             ray_different.y_ray_o = ray.o ;
-            ray_different.x_ray_dir = (ray.o+self.dx_camera);
-            ray_different.y_ray_dir = (ray.o+self.dy_camera);
+            ray_different.x_ray_dir = ray.o+self.dx_camera;
+            ray_different.y_ray_dir = ray.o+self.dy_camera;
         };
         ray_different.set_differentials(true);
         (Some(ray_different),1.0)
@@ -139,7 +139,7 @@ fn We(
     fn get_shutter_open(&self) -> f32 {
         self.projective_camera.get_shutter_open()
     }
-    fn pdf_we(&self, ray: &crate::core::ray::Ray, pdf_pos: f32, p_raster: f32) {
+    fn pdf_we(&self, _ray: &crate::core::ray::Ray, _pdf_pos: f32, _p_raster: f32) {
         todo!();
     }
 }

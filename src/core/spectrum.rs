@@ -1,7 +1,5 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 enum SpectrumType {
-    Reflectance,
-    Illuminant,
     RGB,
 }
 #[derive(Clone, Copy)]
@@ -24,10 +22,10 @@ impl RGBSpectrum {
     pub const BLUE: RGBSpectrum = Self {
         rgb: [0.0, 0.0, 255.0],
     };
-    fn init(&self, v: f32) {
+    pub fn init(&self, _v: f32) {
         todo!()
     }
-    fn from_rgb(rgb: [f32; 3], types: SpectrumType) -> RGBSpectrum {
+    fn from_rgb(_rgb: [f32; 3], _types: SpectrumType) -> RGBSpectrum {
         todo!()
     }
     pub fn to_rgb(&self) -> image::Rgb<u8> {

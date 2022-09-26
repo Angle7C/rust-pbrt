@@ -35,7 +35,7 @@ impl Sample{
         Point2::new(r*theta.cos(), r*theta.sin())
     }
     //均匀球采样
-    pub fn sphere_sample_uniform(u:&Point2)->Point3{
+    pub fn sphere_sample_uniform(_u:&Point2)->Point3{
         todo!();
     }
 }

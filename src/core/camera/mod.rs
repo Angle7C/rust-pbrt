@@ -76,16 +76,16 @@ impl CameraAble for BaseCamera {
             None => None,
         }
     }
-    fn generate_ray(&self, sampler: &CameraSample) -> (Option<Ray>, f32) {
+    fn generate_ray(&self, _sampler: &CameraSample) -> (Option<Ray>, f32) {
         todo!();
     }
-    fn generate_ray_differebtial(&self, campler: &CameraSample) -> (Option<RayDifferential>, f32) {
+    fn generate_ray_differebtial(&self, _campler: &CameraSample) -> (Option<RayDifferential>, f32) {
         todo!()
     }
-    fn We(&self, ray: &Ray, p_raster2: Option<Point2>) -> RGBSpectrum {
+    fn We(&self, _ray: &Ray, _p_raster2: Option<Point2>) -> RGBSpectrum {
         todo!();
     }
-    fn pdf_we(&self, ray: &Ray, pdf_pos: f32, p_raster: f32) {
+    fn pdf_we(&self, _ray: &Ray, _pdf_pos: f32, _p_raster: f32) {
         todo!();
     }
 }
@@ -130,8 +130,8 @@ impl ProjectiveCamera {
             1.0,
         ));
         let c = Mat4::from_scale(Vec3::new(
-            film.full_Resolution.x,
-            film.full_Resolution.y,
+            film.full_resolution.x,
+            film.full_resolution.y,
             1.0,
         ));
         let screen_to_raster =c*b*a;
@@ -151,16 +151,16 @@ impl ProjectiveCamera {
     }
 }
 impl CameraAble for ProjectiveCamera {
-    fn We(&self, ray: &Ray, p_raster2: Option<Point2>) -> RGBSpectrum {
+    fn We(&self, _ray: &Ray, _p_raster2: Option<Point2>) -> RGBSpectrum {
         todo!()
     }
-    fn generate_ray(&self, sampler: &CameraSample) -> (Option<Ray>, f32) {
+    fn generate_ray(&self, _sampler: &CameraSample) -> (Option<Ray>, f32) {
         todo!()
     }
     fn get_camera_to_world(&self) -> Transform {
         self.base_camera_data.camera_to_world
     }
-    fn generate_ray_differebtial(&self, sampler: &CameraSample) -> (Option<RayDifferential>, f32) {
+    fn generate_ray_differebtial(&self, _sampler: &CameraSample) -> (Option<RayDifferential>, f32) {
         todo!()
     }
     fn get_medium(&self) -> Option<Rc<Medium>> {
@@ -172,7 +172,7 @@ impl CameraAble for ProjectiveCamera {
     fn get_shutter_open(&self) -> f32 {
         self.base_camera_data.shutter_open
     }
-    fn pdf_we(&self, ray: &Ray, pdf_pos: f32, p_raster: f32) {
+    fn pdf_we(&self, _ray: &Ray, _pdf_pos: f32, _p_raster: f32) {
         todo!()
     }
 }

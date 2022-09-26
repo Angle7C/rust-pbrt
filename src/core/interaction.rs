@@ -1,8 +1,7 @@
-use core::time;
-use hexasphere::BaseShape;
+
 use std::rc::Rc;
 
-use super::{medium::Medium, ray::RayAble, *};
+use super::{medium::Medium, ray::RayAble,};
 use crate::extends::{Normal, Point3, Vec3, UV};
 pub trait InteractionAble {
     fn is_surface_interaction(&self) -> bool;
@@ -57,7 +56,7 @@ impl SurfaceInteraction {
         time: f32,
         wo: Vec3,
         normal: Vec3,
-        medium: Option<Rc<Medium>>,
+        _medium: Option<Rc<Medium>>,
         uv: UV,
         dpdu: Vec3,
         dpdv: Vec3,

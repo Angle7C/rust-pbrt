@@ -9,6 +9,9 @@ pub struct Lambertian{
     r:RGBSpectrum,
 }
 impl Lambertian{
+    pub fn init()->Self{
+        Self::new(RGBSpectrum::ZERO)
+    }
     pub fn new(r:RGBSpectrum)->Self{
         let t=BaseBXDF::new(BxDFtype::Diffuse);
         Self{
@@ -18,22 +21,22 @@ impl Lambertian{
     }
 }
 impl BxDFable for Lambertian{
-    fn f(&self,wo:&crate::extends::Vec3,wi:&crate::extends::Vec3)->RGBSpectrum {
+    fn f(&self,_wo:&crate::extends::Vec3,_wi:&crate::extends::Vec3)->RGBSpectrum {
         self.r*(1.0/PI)
     }
     fn get_type(&self)->super::BxDFtype {
-        self.bxdf.get_type()
+        self.bxdf.typs
     }
-    fn pdf(&self,wi:&crate::extends::Vec3,wo:&crate::extends::Vec3)->f32 {
+    fn pdf(&self,_wi:&crate::extends::Vec3,_wo:&crate::extends::Vec3)->f32 {
         todo!()
     }
-    fn rho(&self,n_samples:i32,sample1:&crate::extends::Point2,sample2:&crate::extends::Point2)->RGBSpectrum {
+    fn rho(&self,_n_samples:i32,_sample1:&crate::extends::Point2,_sample2:&crate::extends::Point2)->RGBSpectrum {
         self.r
     }
-    fn rho_wo(&self,wo:&crate::extends::Vec3,n_samples:i32,sample:&crate::extends::Point2)->RGBSpectrum {
-        self.r
+    fn rho_wo(&self,_wo:&crate::extends::Vec3,_n_samples:i32,_sample:&crate::extends::Point2)->RGBSpectrum {
+        todo!()
     }
-    fn sample_f(&self,wo:&crate::extends::Vec3,wi:&mut crate::extends::Vec3,sample:&crate::extends::Point2,pdf:&mut f32,types :super::BxDFtype)->RGBSpectrum {
+    fn sample_f(&self,_wo:&crate::extends::Vec3,_wi:&mut crate::extends::Vec3,_sample:&crate::extends::Point2,_pdf:&mut f32,_types :super::BxDFtype)->RGBSpectrum {
         todo!()
     }
 }

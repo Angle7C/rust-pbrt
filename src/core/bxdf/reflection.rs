@@ -1,4 +1,4 @@
-use std::{i64::MAX, mem::swap, ops::Div};
+use std::{ mem::swap};
 
 use crate::{core::spectrum::RGBSpectrum, extends::*};
 //计算菲涅尔
@@ -24,8 +24,8 @@ impl FresnelAble for FresnelConductor {
         let n2 = n * n;
         let k2 = k * k;
         let t0 = n2 - k2 - RGBSpectrum::from_value(sin_i2);
-        let a_and_b2=(t0*t0+n2*k2*4.0);
-        let t1=(a_and_b2+RGBSpectrum::from_value(cos_i2));
+        let a_and_b2=t0*t0+n2*k2*4.0;
+        let t1=a_and_b2+RGBSpectrum::from_value(cos_i2);
         let a=((a_and_b2+t0)*0.5).sqrt();
         let t2=a*cos*2.0;
         let rs=(t1-t2)/(t1+t2);
@@ -53,7 +53,7 @@ impl FresnelAble for FresnelDielectric {
             return RGBSpectrum::MAX;
         };
         let cos_t = f32::max(0.0, 1.0 - sin_t * sin_t).sqrt();
-        let det = (self.eta_t * cos_i + self.eta_i * cos_t);
+        let det = self.eta_t * cos_i + self.eta_i * cos_t;
         let a = (self.eta_t * cos_i - self.eta_i * cos_t) / det;
         let b = (self.eta_i * cos_i - self.eta_t * cos_t) / det;
         RGBSpectrum::from_value((a * a + b * b) / 2.0)

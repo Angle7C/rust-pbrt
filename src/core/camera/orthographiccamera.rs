@@ -53,11 +53,11 @@ impl OrthographicCamera {
         }
     }
     pub fn next(&mut self,film :&Film)->Option< CameraSample>{
-        if self.index as f32 >=film.full_Resolution.x*film.full_Resolution.y{
+        if self.index as f32 >=film.full_resolution.x*film.full_resolution.y{
            return None
         }
-        let x=self.index/film.full_Resolution.x as u32;
-        let y=self.index%film.full_Resolution.x as u32;
+        let x=self.index/film.full_resolution.x as u32;
+        let y=self.index%film.full_resolution.x as u32;
         self.index+=1;
         Some(CameraSample::new(Point2::new(x as f32,y as f32), 0.0))
     }
@@ -90,7 +90,7 @@ impl CameraAble for OrthographicCamera {
     fn get_medium(&self) -> Option<Rc<Medium>> {
         self.projective.get_medium()
     }
-    fn We(&self, ray: &Ray, p_raster2: Option<Point2>) -> RGBSpectrum {
+    fn We(&self, _ray: &Ray, _p_raster2: Option<Point2>) -> RGBSpectrum {
         todo!()
     }
 
@@ -147,7 +147,7 @@ impl CameraAble for OrthographicCamera {
     fn get_shutter_open(&self) -> f32 {
         self.projective.base_camera_data.shutter_open
     }
-    fn pdf_we(&self, ray: &Ray, pdf_pos: f32, p_raster: f32) {
+    fn pdf_we(&self, _ray: &Ray, _pdf_pos: f32,_p_raster: f32) {
         todo!()
     }
 }
