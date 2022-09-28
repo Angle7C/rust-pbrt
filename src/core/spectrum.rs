@@ -4,7 +4,7 @@ enum SpectrumType {
 }
 #[derive(Clone, Copy)]
 pub struct RGBSpectrum {
-    pub rgb: [f32; 3],
+    pub rgb: [f64; 3],
 }
 impl RGBSpectrum {
     pub const MAX: RGBSpectrum = Self {
@@ -22,22 +22,23 @@ impl RGBSpectrum {
     pub const BLUE: RGBSpectrum = Self {
         rgb: [0.0, 0.0, 255.0],
     };
-    pub fn init(&self, _v: f32) {
+    pub fn init(&self, _v: f64) {
         todo!()
     }
-    fn from_rgb(_rgb: [f32; 3], _types: SpectrumType) -> RGBSpectrum {
+    fn from_rgb(_rgb: [f64; 3], _types: SpectrumType) -> RGBSpectrum {
         todo!()
     }
     pub fn to_rgb(&self) -> image::Rgb<u8> {
-        let r = self.rgb[0].clamp(0.0, 255.0) as u8;
-        let g = self.rgb[1].clamp(0.0, 255.0) as u8;
-        let b = self.rgb[2].clamp(0.0, 255.0) as u8;
-        image::Rgb([r, g, b])
+        let r = (self.rgb[0].sqrt()).clamp(0.0, 1.0) *255.0;
+        let g = (self.rgb[1].sqrt()).clamp(0.0, 1.0) *255.0;
+        let b = (self.rgb[2].sqrt()).clamp(0.0, 1.0) *255.0;
+        // println!("{} {} {}",r,g,b);
+        image::Rgb([r as u8, g as u8 , b as u8])
     }
-    pub fn new(r: f32, g: f32, b: f32) -> Self {
+    pub fn new(r: f64, g: f64, b: f64) -> Self {
         Self { rgb: ([r, g, b]) }
     }
-    pub fn from_value(v: f32) -> Self {
+    pub fn from_value(v: f64) -> Self {
         Self::new(v, v, v)
     }
     pub fn sqrt(&self) -> Self {
@@ -67,9 +68,9 @@ impl Div<Self> for RGBSpectrum {
         Self::from_rgb(rgb, SpectrumType::RGB)
     }
 }
-impl Mul<f32> for RGBSpectrum {
+impl Mul<f64> for RGBSpectrum {
     type Output = Self;
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         let mut rgb = [0.0, 0.0, 0.0];
         for i in 0..3 {
             rgb[i] = self.rgb[i] * rhs;

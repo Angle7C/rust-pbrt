@@ -1,108 +1,66 @@
-use std::rc::Rc;
 
-use crate::extends::{Point3, Vec3};
+use cgmath::{EuclideanSpace, Zero};
+
+use crate::extends::{Point3, Vector3};
 
 use super::medium::Medium;
 
+#[derive(Clone,Debug)]
 pub struct Ray {
+    /// origin
     pub o: Point3,
-    pub d: Vec3,
-    pub t_max: f32,
-    pub time: f32,
-    pub medium: Option<Rc<Medium>>,
+    /// direction
+    pub d: Vector3,
+    /// limits the ray to a segment along its infinite extent
+    pub t_max: f64,
+    /// used for animations
+    pub time: f64,
+    pub medium: Option<Medium>,
+    /// in C++: 'class RayDifferential : public Ray'
+    pub differential: Option<RayDifferential>,
 }
-pub trait RayAble {
-    fn at(&self, t: f32) -> Point3;
-    fn has_nans(&self) -> bool;
+impl Default for Ray {
+    fn default() -> Self {
+        Self {
+            o: Point3::origin(),
+            d: Vector3::zero(),
+            t_max: f64::INFINITY,
+            time: 0.0,
+            medium:None,
+            differential: None,
+        }
+    }
 }
 impl Ray {
-    pub fn init() -> Self {
-        Ray {
-            o: (Point3::ZERO),
-            d: (Point3::ZERO),
-            t_max: (f32::INFINITY),
-            time: (f32::INFINITY),
-            medium: (None),
-        }
+    // Point3f operator()(Float t) const { return o + d * t; }
+    pub fn at(&self, t: f64) -> Point3 {
+        self.o + self.d * t
     }
-    pub fn init_o_dir(o: Point3, d: Vec3) -> Self {
-        let mut ray = Self::init();
-        ray.o = o;
-        ray.d = d.normalize();
-        ray
-    }
-    pub fn new(o: Point3, d: Vec3, t_max: f32, time: f32, medium: Option<Rc<Medium>>) -> Self {
+    pub fn new(o:Point3,v:Vector3)->Self{
         Self {
             o: o,
-            d: d.normalize(),
-            t_max: t_max,
-            time: time,
-            medium: medium,
+            d: v,
+            t_max: f64::INFINITY,
+            time: 0.0,
+            medium:None,
+            differential: None,
+        }
+    }
+    // from class RayDifferential
+    pub fn scale_differentials(&mut self, s: f64) {
+        if let Some(d) = self.differential.iter_mut().next() {
+            d.rx_origin = self.o + (d.rx_origin - self.o) * s;
+            d.ry_origin = self.o + (d.ry_origin - self.o) * s;
+            d.rx_direction = self.d + (d.rx_direction - self.d) * s;
+            d.ry_direction = self.d + (d.ry_direction - self.d) * s;
         }
     }
 }
-impl RayAble for Ray {
-    fn at(&self, t: f32) -> Point3 {
-        self.o + t * self.d
-    }
-    fn has_nans(&self) -> bool {
-        self.o.is_nan() || self.d.is_nan()
-    }
-}
-pub struct RayDifferential {
-    pub main_ray: Ray,
-    pub x_ray_o: Point3,
-    pub y_ray_o: Point3,
-    pub x_ray_dir: Vec3,
-    pub y_ray_dir: Vec3,
 
-    has_differentials: bool,
-}
-impl RayDifferential {
-    pub fn init() -> Self {
-        Self {
-            main_ray: (Ray::init()),
-            x_ray_o: (Point3::ZERO),
-            y_ray_o: (Point3::ZERO),
-            x_ray_dir: (Vec3::ZERO),
-            y_ray_dir: (Vec3::ZERO),
-            has_differentials: false,
-        }
-    }
-    pub fn new_o_dir(o: Point3, dir: Vec3) -> Self {
-        let mut ray = RayDifferential::init();
-        ray.main_ray.o = o;
-        ray.main_ray.d = dir;
-        ray
-    }
-    pub fn new(
-        o: Point3,
-        d: Vec3,
-        t_max: f32,
-        time: f32,
-        medium: Option<Rc<Medium>>,
-        x_o: Point3,
-        y_o: Point3,
-        x_dir: Vec3,
-        y_dir: Vec3,
-        has: bool,
-    ) -> Self {
-        Self {
-            main_ray: Ray::new(o, d, t_max, time, medium),
-            x_ray_o: x_o,
-            y_ray_o: y_o,
-            x_ray_dir: x_dir,
-            y_ray_dir: y_dir,
-            has_differentials: has,
-        }
-    }
-    pub fn scale_differentials(&mut self, s: f32) {
-        self.x_ray_o = self.x_ray_o + (self.x_ray_o - self.main_ray.o) * s;
-        self.y_ray_o = self.y_ray_o + (self.y_ray_o - self.main_ray.o) * s;
-        self.x_ray_dir = self.x_ray_dir + (self.x_ray_dir - self.main_ray.d) * s;
-        self.x_ray_dir = self.y_ray_dir + (self.x_ray_dir - self.main_ray.d) * s;
-    }
-    pub fn set_differentials(&mut self,value:bool){ 
-        self.has_differentials=value;
-    }
+#[derive(Debug, Copy, Clone)]
+pub struct RayDifferential {
+    pub rx_origin: Point3,
+    pub ry_origin: Point3,
+    pub rx_direction: Vector3,
+    pub ry_direction: Vector3,
 }

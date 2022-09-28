@@ -1,5 +1,5 @@
-use crate::extends::*;
 
+#[derive(Clone, Copy,Debug)]
 pub struct Medium{
     
 }

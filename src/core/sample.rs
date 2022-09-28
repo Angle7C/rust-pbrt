@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 
 use rand::Rng;
 
@@ -17,10 +17,10 @@ pub struct CameraSample{
     //在光圈上采样的一个点[0，1）
     pub p_lens:Point2,
     //对时间进行采样
-    pub time :f32,
+    pub time :f64,
 }
 impl CameraSample {
-    pub fn new(p_film:Point2,time:f32)->Self{
+    pub fn new(p_film:Point2,time:f64)->Self{
         let r=rand::thread_rng().gen_range(0.0, 1.0);
         let theta=rand::thread_rng().gen_range(0.0, 1.0);
         Self { p_film: (p_film), p_lens: (Point2::new(r,theta)), time: (time) }
@@ -30,8 +30,8 @@ pub struct  Sample;
 impl Sample{
     //均匀⚪采样
     pub fn disk_sample_uniform(u:&Point2)->Point2{
-        let r=u.x.sqrt();
-        let theta=u.y*2.0*PI;
+        let r=u[0].sqrt();
+        let theta=u[1]*2.0*PI;
         Point2::new(r*theta.cos(), r*theta.sin())
     }
     //均匀球采样

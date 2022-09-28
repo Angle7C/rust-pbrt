@@ -1,4 +1,4 @@
-pub fn quadratic(a:f32,b:f32,c:f32)->Option<(f32,f32)>{
+pub fn quadratic(a:f64,b:f64,c:f64)->Option<(f64,f64)>{
     let det=b*b-4.00*a*c;
     if det<0.0{
         None

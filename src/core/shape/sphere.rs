@@ -1,155 +1,338 @@
-use super::*;
+// std
+
+// see sphere.h
+
+use std::f64::consts::PI;
+
+use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Rad, Deg};
+
 use crate::{
-    core::{ray::RayAble, sample::Sample},
-    extends::*,
-    until::untils::quadratic,
+    core::{aabb::Bounds3, interaction::{SurfaceInteraction, Interaction}, material::Material, ray::Ray},
+    extends::{Point2, Point3, Vector3, Mat4},
+    until::{transform::Transforms, untils::quadratic},
 };
 
-///定义在参数坐标系的球体，u，v ->(0,1)
+#[derive(Clone)]
 pub struct Sphere {
-    shape: BaseShape,
-    ///球体半径
-    pub radius: f32,
-    /// y轴最小范围角
-    pub theta_min: f32,
-    /// y轴最大范围角
-    pub theta_max: f32,
-    /// 平面范围角
-    pub phi_max: f32,
-    //最小高度
-    pub z_min: f32,
-    //最大高度
-    pub z_max: f32,
+    pub radius: f64,
+    pub z_min: f64,
+    pub z_max: f64,
+    pub theta_min: f64,
+    pub theta_max: f64,
+    pub phi_max: f64,
+    // inherited from class Shape (see shape.h)
+    pub object_to_world: Transforms,
+    pub reverse_orientation: bool,
+    // pub transform_swaps_handedness: bool,
+    pub material: Option<Material>,
 }
+
+impl Default for Sphere {
+    fn default() -> Self {
+        let object_to_world: Transforms = Transforms::default();
+        Sphere {
+            // Shape
+            object_to_world,
+            reverse_orientation: false,
+            // transform_swaps_handedness: object_to_world.swaps_handedness(),
+            // Sphere
+            radius: 1.0,
+            z_min: -1.0,
+            z_max: 1.0,
+            theta_min: (-1.0 as f64).acos(),
+            theta_max: (1.0 as f64).acos(),
+            phi_max: Rad(360.0).0,
+            material: None,
+        }
+    }
+}
+
 impl Sphere {
-    ///构造函数
     pub fn new(
         object_to_world: Mat4,
         reverse_orientation: bool,
-        radius: f32,
-        z_min: f32,
-        z_max: f32,
-        phi_max: f32,
+        radius: f64,
+        z_min: f64,
+        z_max: f64,
+        phi_max: f64,
     ) -> Self {
-        let base = BaseShape::new(object_to_world, reverse_orientation);
-        let z_min = z_min.min(z_max).clamp(-radius, radius);
-        let z_max = z_min.max(z_max).clamp(-radius, radius);
-        let theta_min = ((z_min.min(z_max) / radius).clamp(-1.0, 1.0)).acos();
-        let theta_max = ((z_min.max(z_max) / radius).clamp(-1.0, 1.0)).acos();
-        let phi_max = (phi_max/180.0*PI).clamp(0.0, 2.0*PI);
-        Self {
-            shape: (base),
-            radius: (radius),
-            theta_min: (theta_min),
-            theta_max: (theta_max),
-            phi_max: (phi_max),
-            z_min: (z_min),
-            z_max: (z_max),
+        Sphere {
+            // Shape
+            object_to_world: Transforms::new(object_to_world),
+            reverse_orientation,
+            // transform_swaps_handedness: object_to_world
+            // Sphere
+            radius,
+            z_min: f64::clamp(z_min.min(z_max), -radius, radius),
+            z_max: f64::clamp(z_min.max(z_max), -radius, radius),
+            theta_min: f64::clamp(z_min.min(z_max) / radius, -1.0, 1.0).acos(),
+            theta_max: f64::clamp(z_min.max(z_max) / radius, -1.0, 1.0).acos(),
+            phi_max: Rad::from(Deg(f64::clamp(phi_max, 0.0, 360.0))).0,
+            material: None,
         }
     }
-}
-impl BaseShapeAble for Sphere {
-    fn area(&self) -> f32 {
-        self.radius * self.phi_max * (self.z_max - self.z_min)
-    }
-    fn intersect(&self, ray: &Ray) -> Option<Interaction> {
-        let ray = self.obj_to_world().applying_ray_inv(ray);
-        let a = ray.d.x * ray.d.x + ray.d.y * ray.d.y + ray.d.z * ray.d.z;
-        let b = 2.0 * (ray.d.x * ray.o.x + ray.d.y * ray.o.y + ray.d.z * ray.o.z);
-        let c =
-            ray.o.x * ray.o.x + ray.o.y * ray.o.y + ray.o.z * ray.o.z - self.radius * self.radius;
-        //求解圆和射线的交点。
-        if let Some((t0, t1)) = quadratic(a, b, c) {
-            if t0 >= ray.t_max || t1 < 0.0 {
-                return None;
-            };
-            let mut t = t0;
-            if t<0.0{
-                t=t1;
-                if t>ray.t_max{
-                    return None;
-                }
-            }
-            let mut point = ray.at(t);
-            if point.x==0.0&&point.y==0.0{
-                point.x=1e-5*self.radius;
-            }
-            let mut phi=point.y.atan2(point.x);
-            if phi<0.0{
-                phi+=2.0*PI;
-            }
-            if (self.z_min>-self.radius&&point.z<self.z_min)||(self.z_max<self.radius&&point.z>self.z_max)||phi>self.phi_max{
-                if t==t1||t1>ray.t_max{
-                    return None;
-                }
-                t=t1;
-                point=ray.at(t);
-                if point.x==0.0&&point.y==0.0{
-                    point.x=1e-5*self.radius;
-                }
-                 phi=point.y.atan2(point.x);
-                if phi<0.0{
-                    phi+=2.0*PI;
-                }
-                if (self.z_min>-self.radius&&point.z<self.z_min)||(self.z_max<self.radius&&point.z>self.z_max)||phi>self.phi_max{
-                    return None
-                }
-                
-            }
-            let point=self.obj_to_world().applying_point(point);
-            let d=self.obj_to_world().applying_vector(ray.d);
-            let normal=self.obj_to_world().applying_vector(point);
-            Some(Interaction::new(point, t, d, normal))
-        } else {
-            None
-        }
-    }
-    fn intersect_p(&self, _ray: &Ray) -> Option<SurfaceInteraction> {
-        None
-    }
-    fn obj_to_world(&self) -> Transform {
-        self.shape.obj_to_world
-    }
-    fn object_world_bound(&self) -> Bounds3 {
+    // Shape
+    pub fn object_bound(&self) -> Bounds3 {
         Bounds3 {
-            min: Point3::new(-self.radius, -self.radius, self.z_min),
-            max: Point3::new(self.radius, self.radius, self.z_max),
+            min: Point3 {
+                x: -self.radius,
+                y: -self.radius,
+                z: self.z_min,
+            },
+            max: Point3 {
+                x: self.radius,
+                y: self.radius,
+                z: self.z_max,
+            },
         }
     }
-    fn object_bound(&self) -> Bounds3 {
-        Bounds3::new(
-            Point3::new(-self.radius, -self.radius, self.z_min),
-            Point3::new(self.radius, self.radius, self.z_max),
-        )
+    pub fn world_bound(&self) -> Bounds3 {
+        // in C++: Bounds3f Shape::WorldBound() const { return (*ObjectToWorld)(ObjectBound()); }
+        self.object_to_world.applying_box_3(&self.object_bound())
     }
-    fn pdf(&self, _interaction: &Interaction) -> f32 {
-        1.0 / self.area()
-    }
-    fn pdf_iter(&self, _interaction: &Interaction, _wi: &Vec3) -> f32 {
-        1.0 / self.area()
-    }
-    fn reverse_orientation(&self) -> bool {
-        self.shape.reverse_orientation
-    }
-    fn sample(&self, u: &Point2) -> (Interaction, f32) {
-        let mut p_obj = Point3::ZERO + self.radius * Sample::sphere_sample_uniform(u);
-        let mut it = Interaction::init();
-        it.normal = self
-            .obj_to_world()
-            .applying_point(Vec3::new(p_obj.x, p_obj.y, p_obj.z))
-            .normalize();
-        if self.reverse_orientation() {
-            it.normal = -it.normal;
+    pub fn intersect(&self, ray: &Ray, _t_hit: &mut f64, _isect: &mut SurfaceInteraction) -> bool {
+        let ray: Ray = self.object_to_world.applying_ray_inv(ray);
+        let ox = ray.o.x;
+        let oy = ray.o.y;
+        let oz = ray.o.z;
+        let dx = ray.d.x;
+        let dy = ray.d.y;
+        let dz = ray.d.z;
+        let a = dx * dx + dy * dy + dz * dz;
+        let b = (dx * ox + dy * oy + dz * oz) * 2.0;
+        let c = ox * ox + oy * oy + oz * oz - self.radius * self.radius;
+        // solve quadratic equation for _t_ values
+        let mut t0 = 0.0;
+        let mut t1 = 0.0;
+        if let Some((x1,x2)) = quadratic(a, b, c) {
+            t0 = x1;
+            t1 = x2;
+        } else {
+            return false;
         }
-        p_obj = p_obj * (self.radius / p_obj.distance(Point3::ZERO));
-        it.p = self.obj_to_world().applying_point(p_obj);
-        let pdf = 1.0 / self.area();
-        (it, pdf)
+        // check quadric shape _t0_ and _t1_ for nearest intersection
+        if t0 > ray.t_max || t1 <= 0.0 {
+            return false;
+        }
+        let mut t_shape_hit = t0;
+        if t_shape_hit <= 0.0 {
+            t_shape_hit = t1;
+            if t_shape_hit > ray.t_max {
+                return false;
+            }
+        }
+        // compute sphere hit position and $\phi$
+        let mut p_hit: Point3 = ray.at(t_shape_hit);
+        // refine sphere intersection point
+        p_hit *= self.radius / p_hit.distance(Point3::origin());
+        if p_hit.x == 0.0 && p_hit.y == 0.0 {
+            p_hit.x = 1e-5 * self.radius;
+        }
+        let mut phi: f64 = p_hit.y.atan2(p_hit.x);
+        if phi < 0.0 {
+            phi += 2.0 * PI;
+        }
+        // test sphere intersection against clipping parameters
+        if (self.z_min > -self.radius && p_hit.z < self.z_min)
+            || (self.z_max < self.radius && p_hit.z > self.z_max)
+            || phi > self.phi_max
+        {
+            if t_shape_hit == t1 {
+                return false;
+            }
+            if t1> ray.t_max as f64 {
+                return false;
+            }
+            t_shape_hit = t1;
+            // compute sphere hit position and $\phi$
+            p_hit = ray.at(t_shape_hit);
+
+            // refine sphere intersection point
+            p_hit *= self.radius / p_hit.distance(Point3::origin());
+            if p_hit.x == 0.0 && p_hit.y == 0.0 {
+                p_hit.x = 1e-5 * self.radius;
+            }
+            phi = p_hit.y.atan2(p_hit.x);
+            if phi < 0.0 {
+                phi += 2.0 * PI;
+            }
+            if (self.z_min > -self.radius && p_hit.z < self.z_min)
+                || (self.z_max < self.radius && p_hit.z > self.z_max)
+                || phi > self.phi_max
+            {
+                return false;
+            }
+        }
+        // find parametric representation of sphere hit
+        let u: f64 = phi / self.phi_max;
+        let theta: f64 = f64::clamp(p_hit.z / self.radius, -1.0, 1.0).acos();
+        let v: f64 = (theta - self.theta_min) / (self.theta_max - self.theta_min);
+        // compute sphere $\dpdu$ and $\dpdv$
+        let z_radius: f64 = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
+        let inv_z_radius: f64 = 1.0 / z_radius;
+        let cos_phi: f64 = p_hit.x * inv_z_radius;
+        let sin_phi: f64 = p_hit.y * inv_z_radius;
+        let dpdu: Vector3 = Vector3 {
+            x: -self.phi_max * p_hit.y,
+            y: self.phi_max * p_hit.x,
+            z: 0.0,
+        };
+        let dpdv: Vector3 = Vector3 {
+            x: p_hit.z * cos_phi,
+            y: p_hit.z * sin_phi,
+            z: -self.radius * theta.sin(),
+        } * (self.theta_max - self.theta_min);
+        // compute sphere $\dndu$ and $\dndv$
+        let d2_p_duu: Vector3 = Vector3 {
+            x: p_hit.x,
+            y: p_hit.y,
+            z: 0.0,
+        } * -self.phi_max
+            * self.phi_max;
+        let d2_p_duv: Vector3 = Vector3 {
+            x: -sin_phi,
+            y: cos_phi,
+            z: 0.0,
+        } * (self.theta_max - self.theta_min)
+            * p_hit.z
+            * self.phi_max;
+        let d2_p_dvv: Vector3 = Vector3 {
+            x: p_hit.x,
+            y: p_hit.y,
+            z: p_hit.z,
+        } * -(self.theta_max - self.theta_min)
+            * (self.theta_max - self.theta_min);
+        // compute coefficients for fundamental forms
+        let ec: f64 = dpdu.dot(dpdu);
+        let fc: f64 = dpdu.dot(dpdv);
+        let gc: f64 = dpdv.dot(dpdv);
+        let nc: Vector3 = dpdu.cross(dpdv).normalize();
+        let el: f64 = nc.dot(d2_p_duu);
+        let fl: f64 = nc.dot(d2_p_duv);
+        let gl: f64 = nc.dot(d2_p_dvv);
+        // compute $\dndu$ and $\dndv$ from fundamental form coefficients
+        let inv_egf2: f64 = 1.0 / (ec * gc - fc * fc);
+        let dndu = dpdu * (fl * fc - el * gc) * inv_egf2 + dpdv * (el * fc - fl * ec) * inv_egf2;
+        let _dndu = Vector3 {
+            x: dndu.x,
+            y: dndu.y,
+            z: dndu.z,
+        };
+        let dndv = dpdu * (gl * fc - fl * gc) * inv_egf2 + dpdv * (fl * fc - gl * ec) * inv_egf2;
+        let _dndv = Vector3 {
+            x: dndv.x,
+            y: dndv.y,
+            z: dndv.z,
+        };
+        // compute error bounds for sphere intersection
+        // initialize _SurfaceInteraction_ from parametric information
+        let _uv_hit: Point2 = Point2 { x: u, y: v };
+        let _wo: Vector3 = -ray.d;
+        todo!();
+        // self.object_to_world.transform_surface_interaction(isect);
+        // *t_hit = t_shape_hit as f64;
+        // true
     }
-    fn sample_inter(&self, _interaction: &Interaction, u: &Point2) -> (Interaction, f32) {
-        self.sample(u)
+    pub fn intersect_p(&self, ray: &Ray) -> bool {
+        let ray: Ray = self.object_to_world.applying_ray_inv(ray);
+        let ox = ray.o.x;
+        let oy = ray.o.y;
+        let oz = ray.o.z;
+        let dx = ray.d.x;
+        let dy = ray.d.y;
+        let dz = ray.d.z;
+        let a = dx * dx + dy * dy + dz * dz;
+        let b = (dx * ox + dy * oy + dz * oz) * 2.0;
+        let c = ox * ox + oy * oy + oz * oz - self.radius * self.radius;
+        // solve quadratic equation for _t_ values
+        let mut t0 = 0.0;
+        let mut t1 = 0.0;
+        if let Some((x1,x2)) = quadratic(a, b, c) {
+            t0 = x1;
+            t1 = x2;
+        } else {
+            return false;
+        }
+        // check quadric shape _t0_ and _t1_ for nearest intersection
+        if t0 > ray.t_max || t1 <= 0.0 {
+            return false;
+        }
+        let mut t_shape_hit = t0;
+        if t_shape_hit <= 0.0 {
+            t_shape_hit = t1;
+            if t_shape_hit > ray.t_max {
+                return false;
+            }
+        }
+        // compute sphere hit position and $\phi$
+        let mut p_hit: Point3 = ray.at(t_shape_hit);
+        // refine sphere intersection point
+        p_hit *= self.radius / p_hit.distance(Point3::origin());
+        if p_hit.x == 0.0 && p_hit.y == 0.0 {
+            p_hit.x = 1e-5 * self.radius;
+        }
+        let mut phi: f64 = p_hit.y.atan2(p_hit.x);
+        if phi < 0.0 {
+            phi += 2.0 * PI;
+        }
+        // test sphere intersection against clipping parameters
+        if (self.z_min > -self.radius && p_hit.z < self.z_min)
+            || (self.z_max < self.radius && p_hit.z > self.z_max)
+            || phi > self.phi_max
+        {
+            if t_shape_hit == t1 {
+                return false;
+            }
+            if t1> ray.t_max as f64 {
+                return false;
+            }
+            t_shape_hit = t1;
+            // compute sphere hit position and $\phi$
+            p_hit = ray.at(t_shape_hit);
+
+            // refine sphere intersection point
+            p_hit *= self.radius / p_hit.distance(Point3::origin());
+            if p_hit.x == 0.0 && p_hit.y == 0.0 {
+                p_hit.x = 1e-5 * self.radius;
+            }
+            phi = p_hit.y.atan2(p_hit.x);
+            if phi < 0.0 {
+                phi += 2.0 * PI;
+            }
+            if (self.z_min > -self.radius && p_hit.z < self.z_min)
+                || (self.z_max < self.radius && p_hit.z > self.z_max)
+                || phi > self.phi_max
+            {
+                return false;
+            }
+        }
+        true
     }
-    fn transform_swap_handedness(&self) -> bool {
-        self.shape.transform_swap_handedness
+    pub fn get_reverse_orientation(&self) -> bool {
+        self.reverse_orientation
+    }
+    pub fn get_transform_swaps_handedness(&self) -> bool {
+        // self.transform_swaps_handedness
+        todo!()
+    }
+    pub fn get_object_to_world(&self) -> Transforms {
+        self.object_to_world
+    }
+    pub fn area(&self) -> f64 {
+        self.phi_max * self.radius * (self.z_max - self.z_min)
+    }
+    pub fn sample(&self, _u: Point2, _pdf: &mut f64) -> Interaction {
+        todo!()
+    }
+    pub fn sample_with_ref_point(
+        &self,
+        _iref: &Interaction,
+        _u: Point2,
+        _pdf: &mut f64,
+    ) -> Interaction {
+        todo!()
+    }
+    pub fn pdf_with_ref_point(&self, _iref: &Interaction, _wi: &Vector3) -> f64 {
+        todo!()
     }
 }
