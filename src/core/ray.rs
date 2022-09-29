@@ -1,5 +1,5 @@
 
-use cgmath::{EuclideanSpace, Zero};
+use cgmath::{EuclideanSpace, Zero, InnerSpace};
 
 use crate::extends::{Point3, Vector3};
 
@@ -39,7 +39,7 @@ impl Ray {
     pub fn new(o:Point3,v:Vector3)->Self{
         Self {
             o: o,
-            d: v,
+            d: v.normalize(),
             t_max: f64::INFINITY,
             time: 0.0,
             medium:None,

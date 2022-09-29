@@ -1,4 +1,4 @@
-use super::aabb::Bounds3;
+use super::{aabb::Bounds3, ray::Ray};
 
 pub mod sphere;
 pub enum Shape{
@@ -16,6 +16,13 @@ impl Shape{
         match  self {
             Self::Sphere(ref sphere)=>{
                 sphere.world_bound()
+            }
+        }
+    }
+    pub fn intersect_p(&self, ray: &Ray)->bool{
+        match  self {
+            Self::Sphere(t)=>{
+                t.intersect_p(ray)
             }
         }
     }

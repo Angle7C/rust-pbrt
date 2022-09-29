@@ -1,9 +1,9 @@
-use std::mem::swap;
+use std::{mem::swap, ops::Deref};
 
 use crate::extends::{Point3, Vector3};
 
 use super::ray::Ray;
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug,Copy)]
 pub struct Bounds3 {
     pub min: Point3,
     pub max: Point3,

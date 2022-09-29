@@ -4,7 +4,7 @@
 
 use std::f64::consts::PI;
 
-use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Rad, Deg};
+use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Rad, Deg, SquareMatrix};
 
 use crate::{
     core::{aabb::Bounds3, interaction::{SurfaceInteraction, Interaction}, material::Material, ray::Ray},

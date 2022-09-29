@@ -148,9 +148,9 @@ impl Transforms {
         Ray::new(o, d)
     }
     pub fn applying_box_3(&self, bounds: &Bounds3) -> Bounds3 {
-        let mut init = Bounds3::init_point(self.inv_trans.transform_point(bounds.rang_point(0)));
+        let mut init = Bounds3::init_point(self.trans.transform_point(bounds.rang_point(0)));
         for i in 1..8 {
-            init = init.union_point(self.inv_trans.transform_point(bounds.rang_point(i)));
+            init = init.union_point(self.trans.transform_point(bounds.rang_point(i)));
         }
         init
     }
@@ -177,12 +177,12 @@ impl Transforms {
         }
         init
     }
-    pub fn perspective(fov: f64, n: f64, f: f64) -> Transforms {
+    pub fn perspective(fov: f64, n: f64, f: f64,aspect:f64) -> Transforms {
        let mat4=Mat4::new(
         1.0,0.0,0.0,0.0,
         0.0,1.0,0.0,0.0,
-        0.0,0.0,f/(f-n),-f*n/(f-n),
-        0.0,0.0,1.0,1.0,
+        0.0,0.0,f/(f-n),1.0,
+        0.0,0.0,-f*n/(f-n),0.0,
        );
        let inv_tan=1.0/Rad::from(Deg(fov/2.0)).0.tan();
        let per=Mat4::from_nonuniform_scale(inv_tan, inv_tan, 1.0)*mat4;
@@ -193,7 +193,7 @@ impl Transforms {
 impl Mul<Transforms> for Transforms {
     type Output = Transforms;
     fn mul(self, rhs: Transforms) -> Self::Output {
-        let trans = self.trans * rhs.trans;
+        let trans =  rhs.trans*self.trans;
         let inv_trans = trans.invert().unwrap();
         Self { trans, inv_trans }
     }

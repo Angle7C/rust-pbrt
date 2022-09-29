@@ -1,6 +1,6 @@
 // see perspective.h
 
-use cgmath::{EuclideanSpace, InnerSpace};
+use cgmath::{EuclideanSpace, InnerSpace, SquareMatrix, Transform};
 
 use crate::{
     core::{
@@ -12,7 +12,7 @@ use crate::{
         sample::{CameraSample, Sample},
         spectrum::RGBSpectrum,
     },
-    extends::{p_to_v, Point2, Point3, Vector3},
+    extends::{p_to_v, Mat4, Point2, Point3, Vector3},
     until::transform::Transforms,
 };
 
@@ -30,6 +30,7 @@ pub struct PerspectiveCamera {
     pub dy_camera: Vector3,
     pub a: f64,
     clipping_start: f64, // ADDED
+    index: u32,
 }
 
 impl PerspectiveCamera {
@@ -46,52 +47,58 @@ impl PerspectiveCamera {
         clipping_start: f64,
     ) -> Self {
         // see perspective.cpp
-        let camera_to_screen: Transforms = Transforms::perspective(fov, 1e-2, 1000.0);
-        // see camera.h
-        // compute projective camera screen transformations
-        let scale1 = Transforms::scaling(
+        let camera_to_screen: Transforms = Transforms::perspective(fov, 1e-2, 1000.0, 1.0);
+        //放大至图片像素
+        let scale1 = Mat4::from_nonuniform_scale(
             film.full_resolution.x as f64,
             film.full_resolution.y as f64,
             1.0,
         );
-        let scale2 = Transforms::scaling(
+        //放缩 到 [0,1][0,1]
+        let scale2 = Mat4::from_nonuniform_scale(
             1.0 / (screen_window.max.x - screen_window.min.x),
             1.0 / (screen_window.min.y - screen_window.max.y),
             1.0,
         );
-        let translate = Transforms::translations(-screen_window.min.x, -screen_window.max.y, 0.0);
-        let screen_to_raster = scale1 * scale2 * translate;
-        let raster_to_screen = Transforms::inverse(&screen_to_raster);
-        let raster_to_camera = Transforms::inverse(&camera_to_screen) * raster_to_screen;
-        // see perspective.cpp
-        // compute differential changes in origin for perspective camera rays
-        let dx_camera: Vector3 = raster_to_camera.applying_vector(Vector3 {
+        //先将近平面的左下角移到原点
+        let translate = Mat4::from_translation(Vector3::new(
+            -screen_window.min.x,
+            -screen_window.max.y,
+            0.0,
+        ));
+        let screen_to_raster = scale1*scale2 * translate;
+        let raster_to_screen = screen_to_raster.invert().unwrap();
+        
+        // let raster_to_screen = screen_to_raster.invert().unwrap();
+        let raster_to_camera = camera_to_screen.inv_trans * raster_to_screen;
+
+        let dx_camera: Vector3 = raster_to_camera.transform_vector(Vector3 {
             x: 1.0,
             y: 0.0,
             z: 0.0,
-        }) - raster_to_camera.applying_vector(Vector3 {
+        }) - raster_to_camera.transform_vector(Vector3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         });
-        let dy_camera: Vector3 = raster_to_camera.applying_vector(Vector3 {
+        let dy_camera: Vector3 = raster_to_camera.transform_vector(Vector3 {
             x: 0.0,
             y: 1.0,
             z: 0.0,
-        }) - raster_to_camera.applying_vector(Vector3 {
+        }) - raster_to_camera.transform_vector(Vector3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         });
         // compute image plane bounds at $z=1$ for _PerspectiveCamera_
         let res: Point2 = film.full_resolution;
-        let mut p_min: Point3 = raster_to_camera.applying_point(Point3 {
+        let mut p_min: Point3 = raster_to_camera.transform_point(Point3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         });
         // Point3 p_max = RasterToCamera(Point3(res.x, res.y, 0));
-        let mut p_max: Point3 = raster_to_camera.applying_point(Point3 {
+        let mut p_max: Point3 = raster_to_camera.transform_point(Point3 {
             x: res.x as f64,
             y: res.y as f64,
             z: 0.0,
@@ -106,73 +113,17 @@ impl PerspectiveCamera {
             shutter_close,
             film,
             medium,
-            raster_to_camera,
+            raster_to_camera: Transforms::new(raster_to_camera),
             lens_radius,
             focal_distance,
             dx_camera,
             dy_camera,
             a,
             clipping_start,
+            index: 0,
         }
     }
-    // pub fn create(
-    //     params: &ParamSet,
-    //     cam2world: AnimatedTransform,
-    //     film: Arc<Film>,
-    //     medium: Option<Arc<Medium>>,
-    //     clipping_start: f64,
-    // ) -> Arc<Camera> {
-    //     let shutteropen: f64 = params.find_one_float("shutteropen", 0.0);
-    //     let shutterclose: f64 = params.find_one_float("shutterclose", 1.0);
-    //     // TODO: std::swap(shutterclose, shutteropen);
-    //     assert!(shutterclose >= shutteropen);
-    //     let lensradius: f64 = params.find_one_float("lensradius", 0.0);
-    //     let focaldistance: f64 = params.find_one_float("focaldistance", 1e6);
-    //     let frame: f64 = params.find_one_float(
-    //         "frameaspectratio",
-    //         (film.full_resolution.x as f64) / (film.full_resolution.y as f64),
-    //     );
-    //     let mut screen: Bounds2f = Bounds2f::default();
-    //     if frame > 1.0 {
-    //         screen.p_min.x = -frame;
-    //         screen.p_max.x = frame;
-    //         screen.p_min.y = -1.0;
-    //         screen.p_max.y = 1.0;
-    //     } else {
-    //         screen.p_min.x = -1.0;
-    //         screen.p_max.x = 1.0;
-    //         screen.p_min.y = -1.0 / frame;
-    //         screen.p_max.y = 1.0 / frame;
-    //     }
-    //     let sw: Vec<f64> = params.find_float("screenwindow");
-    //     if !sw.is_empty() && sw.len() == 4 {
-    //         screen.p_min.x = sw[0];
-    //         screen.p_max.x = sw[1];
-    //         screen.p_min.y = sw[2];
-    //         screen.p_max.y = sw[3];
-    //     }
-    //     let fov: f64 = params.find_one_float("fov", 90.0);
-    //     // let halffov: f64 =
-    //     //     params.find_one_float(String::from("halffov"), -1.0);
-    //     // TODO: if (halffov > 0.f)
-    //     // TODO: let perspective_camera: Arc<Camera + Sync + Send> =
-    //     Arc::new(Camera::Perspective(Box::new(PerspectiveCamera::new(
-    //         cam2world,
-    //         screen,
-    //         shutteropen,
-    //         shutterclose,
-    //         lensradius,
-    //         focaldistance,
-    //         fov,
-    //         film,
-    //         medium,
-    //         clipping_start,
-    //     ))))
-    // }
-    // Camera
     pub fn generate_ray_differential(&self, sample: &CameraSample, ray: &mut Ray) -> f64 {
-        // TODO: ProfilePhase prof(Prof::GenerateCameraRay);
-        // compute raster and camera sample positions
         let p_film: Point3 = Point3 {
             x: sample.p_film.x,
             y: sample.p_film.y,
@@ -306,19 +257,35 @@ impl PerspectiveCamera {
         let p_camera: Point3 = self.raster_to_camera.applying_point(p_film);
         let mut ray = Ray::default();
         ray.o = Point3::origin();
-        ray.d = (p_camera - ray.o).normalize();
+        ray.d = (p_camera - Point3::origin()).normalize();
         self.camera_to_world.applying_ray(&ray)
+    }
+    pub fn next_camsample(&mut self) -> Option<CameraSample> {
+        if self.index >= self.film.get_width() * self.film.get_height() {
+            return None;
+        }
+        let x = self.index / self.film.get_width();
+        let y = self.index % self.film.get_width();
+        self.index += 1;
+
+        let sample = CameraSample::new(Point2::new(x as f64, y as f64), 0.0);
+        Some(sample)
+    }
+    pub fn set_pixel(&mut self, sample: &CameraSample, rgb: RGBSpectrum) {
+        self.film
+            .set_pixel(sample.p_film.x as u32, sample.p_film.y as u32, &rgb)
     }
 }
 #[cfg(test)]
 mod test {
-    use cgmath::EuclideanSpace;
+    use cgmath::{EuclideanSpace, One};
 
     use crate::{
         core::{
             aabb::Bounds3,
-            film::{self, Film},
-            sample::CameraSample,
+            film::{Film},
+            shape::sphere::Sphere,
+            spectrum::RGBSpectrum,
         },
         until::transform::Transforms,
     };
@@ -328,14 +295,14 @@ mod test {
 
     #[test]
     fn test_perspective() {
-        let mut  film = Film::new(Point2::new(200.0, 200.0), "test_camera.png");
-        let camera = PerspectiveCamera::new(
+        let film = Film::new(Point2::new(200.0, 200.0), "test_camera.png");
+        let mut camera = PerspectiveCamera::new(
             Transforms::look_at_lh(
+                Point3::new(0.0, 0.0, 2.0),
                 Point3::new(0.0, 0.0, 0.0),
-                Point3::new(0.0, 0.0, 1.0),
                 Vector3::unit_y(),
             ),
-            Bounds3::new(Point3::new(0.0, 0.0, 0.0), Point3::new(1.0, 1.0, 0.0)),
+            Bounds3::new(Point3::new(-1.0, -1.0, 0.0), Point3::new(1.0, 1.0, 0.0)),
             0.0,
             0.0,
             0.0,
@@ -345,11 +312,28 @@ mod test {
             None,
             0.0,
         );
-        let sample = CameraSample::new(Point2::new(1.0, 1.0), 0.0);
-        {
-
+        let sphere = Sphere::new(
+            Mat4::from_translation(Vector3::new(2.0, 0.0, 0.0)),
+            false,
+            1.0,
+            -1.0,
+            1.0,
+            360.0,
+        );
+        while let Some(t) = camera.next_camsample() {
+            let ray = camera.generate_ray(&t);
+            // let ray = Ray::new(
+            //     Point3::new(
+            //         t.p_film.x / camera.film.get_width() as f64,
+            //         t.p_film.y / camera.film.get_height() as f64,
+            //         0.0,
+            //     ),
+            //     Vector3::unit_z(),
+            // );
+            if sphere.intersect_p(&ray) {
+                camera.set_pixel(&t, RGBSpectrum::new(255.0, 0.0, 0.0));
+            };
         }
-        let ray = camera.generate_ray(&sample);
-        println!("{:?}", ray)
+        camera.film.output_image()
     }
 }
