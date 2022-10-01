@@ -38,6 +38,7 @@ impl RGBSpectrum {
     pub fn new(r: f64, g: f64, b: f64) -> Self {
         Self { rgb: ([r, g, b]) }
     }
+    
     pub fn from_value(v: f64) -> Self {
         Self::new(v, v, v)
     }
@@ -74,6 +75,16 @@ impl Mul<f64> for RGBSpectrum {
         let mut rgb = [0.0, 0.0, 0.0];
         for i in 0..3 {
             rgb[i] = self.rgb[i] * rhs;
+        }
+        Self::from_rgb(rgb, SpectrumType::RGB)
+    }
+}
+impl Div<f64> for RGBSpectrum {
+    type Output = Self;
+    fn div(self, rhs: f64) -> Self::Output {
+        let mut rgb = [0.0, 0.0, 0.0];
+        for i in 0..3 {
+            rgb[i] = self.rgb[i] / rhs;
         }
         Self::from_rgb(rgb, SpectrumType::RGB)
     }

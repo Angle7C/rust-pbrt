@@ -4,11 +4,16 @@
 
 use std::f64::consts::PI;
 
-use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Rad, Deg, SquareMatrix};
+use cgmath::{Deg, EuclideanSpace, InnerSpace, MetricSpace, Rad};
 
 use crate::{
-    core::{aabb::Bounds3, interaction::{SurfaceInteraction, Interaction}, material::Material, ray::Ray},
-    extends::{Point2, Point3, Vector3, Mat4},
+    core::{
+        aabb::Bounds3,
+        interaction::{Interaction, SurfaceInteraction},
+        material::Material,
+        ray::Ray,
+    },
+    extends::{Mat4, Point2, Point3, Vector3},
     until::{transform::Transforms, untils::quadratic},
 };
 
@@ -101,16 +106,14 @@ impl Sphere {
         let a = dx * dx + dy * dy + dz * dz;
         let b = (dx * ox + dy * oy + dz * oz) * 2.0;
         let c = ox * ox + oy * oy + oz * oz - self.radius * self.radius;
-        // solve quadratic equation for _t_ values
-        let mut t0 = 0.0;
-        let mut t1 = 0.0;
-        if let Some((x1,x2)) = quadratic(a, b, c) {
+        let t0: f64;
+        let t1: f64;
+        if let Some((x1, x2)) = quadratic(a, b, c) {
             t0 = x1;
             t1 = x2;
         } else {
             return false;
         }
-        // check quadric shape _t0_ and _t1_ for nearest intersection
         if t0 > ray.t_max || t1 <= 0.0 {
             return false;
         }
@@ -121,9 +124,7 @@ impl Sphere {
                 return false;
             }
         }
-        // compute sphere hit position and $\phi$
         let mut p_hit: Point3 = ray.at(t_shape_hit);
-        // refine sphere intersection point
         p_hit *= self.radius / p_hit.distance(Point3::origin());
         if p_hit.x == 0.0 && p_hit.y == 0.0 {
             p_hit.x = 1e-5 * self.radius;
@@ -132,7 +133,6 @@ impl Sphere {
         if phi < 0.0 {
             phi += 2.0 * PI;
         }
-        // test sphere intersection against clipping parameters
         if (self.z_min > -self.radius && p_hit.z < self.z_min)
             || (self.z_max < self.radius && p_hit.z > self.z_max)
             || phi > self.phi_max
@@ -140,14 +140,12 @@ impl Sphere {
             if t_shape_hit == t1 {
                 return false;
             }
-            if t1> ray.t_max as f64 {
+            if t1 > ray.t_max as f64 {
                 return false;
             }
             t_shape_hit = t1;
-            // compute sphere hit position and $\phi$
             p_hit = ray.at(t_shape_hit);
 
-            // refine sphere intersection point
             p_hit *= self.radius / p_hit.distance(Point3::origin());
             if p_hit.x == 0.0 && p_hit.y == 0.0 {
                 p_hit.x = 1e-5 * self.radius;
@@ -163,11 +161,9 @@ impl Sphere {
                 return false;
             }
         }
-        // find parametric representation of sphere hit
         let u: f64 = phi / self.phi_max;
         let theta: f64 = f64::clamp(p_hit.z / self.radius, -1.0, 1.0).acos();
         let v: f64 = (theta - self.theta_min) / (self.theta_max - self.theta_min);
-        // compute sphere $\dpdu$ and $\dpdv$
         let z_radius: f64 = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
         let inv_z_radius: f64 = 1.0 / z_radius;
         let cos_phi: f64 = p_hit.x * inv_z_radius;
@@ -182,7 +178,6 @@ impl Sphere {
             y: p_hit.z * sin_phi,
             z: -self.radius * theta.sin(),
         } * (self.theta_max - self.theta_min);
-        // compute sphere $\dndu$ and $\dndv$
         let d2_p_duu: Vector3 = Vector3 {
             x: p_hit.x,
             y: p_hit.y,
@@ -202,7 +197,6 @@ impl Sphere {
             z: p_hit.z,
         } * -(self.theta_max - self.theta_min)
             * (self.theta_max - self.theta_min);
-        // compute coefficients for fundamental forms
         let ec: f64 = dpdu.dot(dpdu);
         let fc: f64 = dpdu.dot(dpdv);
         let gc: f64 = dpdv.dot(dpdv);
@@ -210,7 +204,6 @@ impl Sphere {
         let el: f64 = nc.dot(d2_p_duu);
         let fl: f64 = nc.dot(d2_p_duv);
         let gl: f64 = nc.dot(d2_p_dvv);
-        // compute $\dndu$ and $\dndv$ from fundamental form coefficients
         let inv_egf2: f64 = 1.0 / (ec * gc - fc * fc);
         let dndu = dpdu * (fl * fc - el * gc) * inv_egf2 + dpdv * (el * fc - fl * ec) * inv_egf2;
         let _dndu = Vector3 {
@@ -224,14 +217,9 @@ impl Sphere {
             y: dndv.y,
             z: dndv.z,
         };
-        // compute error bounds for sphere intersection
-        // initialize _SurfaceInteraction_ from parametric information
         let _uv_hit: Point2 = Point2 { x: u, y: v };
         let _wo: Vector3 = -ray.d;
         todo!();
-        // self.object_to_world.transform_surface_interaction(isect);
-        // *t_hit = t_shape_hit as f64;
-        // true
     }
     pub fn intersect_p(&self, ray: &Ray) -> bool {
         let ray: Ray = self.object_to_world.applying_ray_inv(ray);
@@ -244,16 +232,14 @@ impl Sphere {
         let a = dx * dx + dy * dy + dz * dz;
         let b = (dx * ox + dy * oy + dz * oz) * 2.0;
         let c = ox * ox + oy * oy + oz * oz - self.radius * self.radius;
-        // solve quadratic equation for _t_ values
-        let mut t0 = 0.0;
-        let mut t1 = 0.0;
-        if let Some((x1,x2)) = quadratic(a, b, c) {
+        let t0: f64;
+        let t1: f64;
+        if let Some((x1, x2)) = quadratic(a, b, c) {
             t0 = x1;
             t1 = x2;
         } else {
             return false;
         }
-        // check quadric shape _t0_ and _t1_ for nearest intersection
         if t0 > ray.t_max || t1 <= 0.0 {
             return false;
         }
@@ -264,9 +250,8 @@ impl Sphere {
                 return false;
             }
         }
-        // compute sphere hit position and $\phi$
+
         let mut p_hit: Point3 = ray.at(t_shape_hit);
-        // refine sphere intersection point
         p_hit *= self.radius / p_hit.distance(Point3::origin());
         if p_hit.x == 0.0 && p_hit.y == 0.0 {
             p_hit.x = 1e-5 * self.radius;
@@ -275,7 +260,6 @@ impl Sphere {
         if phi < 0.0 {
             phi += 2.0 * PI;
         }
-        // test sphere intersection against clipping parameters
         if (self.z_min > -self.radius && p_hit.z < self.z_min)
             || (self.z_max < self.radius && p_hit.z > self.z_max)
             || phi > self.phi_max
@@ -283,14 +267,11 @@ impl Sphere {
             if t_shape_hit == t1 {
                 return false;
             }
-            if t1> ray.t_max as f64 {
+            if t1 > ray.t_max as f64 {
                 return false;
             }
             t_shape_hit = t1;
-            // compute sphere hit position and $\phi$
             p_hit = ray.at(t_shape_hit);
-
-            // refine sphere intersection point
             p_hit *= self.radius / p_hit.distance(Point3::origin());
             if p_hit.x == 0.0 && p_hit.y == 0.0 {
                 p_hit.x = 1e-5 * self.radius;
@@ -306,13 +287,21 @@ impl Sphere {
                 return false;
             }
         }
+        let _t = Interaction::new(
+            self.get_object_to_world().applying_point(p_hit),
+            t_shape_hit,
+            -ray.d,
+            self.get_object_to_world()
+                .applying_vector(p_hit - Point3::origin()),
+            None,
+            None,
+        );
         true
     }
     pub fn get_reverse_orientation(&self) -> bool {
         self.reverse_orientation
     }
     pub fn get_transform_swaps_handedness(&self) -> bool {
-        // self.transform_swaps_handedness
         todo!()
     }
     pub fn get_object_to_world(&self) -> Transforms {
