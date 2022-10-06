@@ -4,7 +4,7 @@
 
 use std::f64::consts::PI;
 
-use cgmath::{Deg, EuclideanSpace, InnerSpace, MetricSpace, Rad};
+use cgmath::{Deg, EuclideanSpace, InnerSpace, MetricSpace, Rad, Zero};
 
 use crate::{
     core::{
@@ -17,7 +17,7 @@ use crate::{
     until::{transform::Transforms, untils::quadratic},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Sphere {
     pub radius: f64,
     pub z_min: f64,
@@ -95,7 +95,7 @@ impl Sphere {
         // in C++: Bounds3f Shape::WorldBound() const { return (*ObjectToWorld)(ObjectBound()); }
         self.object_to_world.applying_box_3(&self.object_bound())
     }
-    pub fn intersect(&self, ray: &Ray, _t_hit: &mut f64, _isect: &mut SurfaceInteraction) -> bool {
+    pub fn intersect(&self, ray: &Ray, isect: &mut SurfaceInteraction) -> bool {
         let ray: Ray = self.object_to_world.applying_ray_inv(ray);
         let ox = ray.o.x;
         let oy = ray.o.y;
@@ -206,20 +206,16 @@ impl Sphere {
         let gl: f64 = nc.dot(d2_p_dvv);
         let inv_egf2: f64 = 1.0 / (ec * gc - fc * fc);
         let dndu = dpdu * (fl * fc - el * gc) * inv_egf2 + dpdv * (el * fc - fl * ec) * inv_egf2;
-        let _dndu = Vector3 {
-            x: dndu.x,
-            y: dndu.y,
-            z: dndu.z,
-        };
         let dndv = dpdu * (gl * fc - fl * gc) * inv_egf2 + dpdv * (fl * fc - gl * ec) * inv_egf2;
-        let _dndv = Vector3 {
-            x: dndv.x,
-            y: dndv.y,
-            z: dndv.z,
-        };
         let _uv_hit: Point2 = Point2 { x: u, y: v };
-        let _wo: Vector3 = -ray.d;
-        todo!();
+        let w0: Vector3 = -ray.d;
+        *isect = SurfaceInteraction::new(
+            self.object_to_world.applying_point(p_hit),
+            t_shape_hit,
+            self.object_to_world.applying_vector(w0),
+            self.object_to_world.applying_normal((p_hit - Point3::origin()).normalize()),
+        );
+        true
     }
     pub fn intersect_p(&self, ray: &Ray) -> bool {
         let ray: Ray = self.object_to_world.applying_ray_inv(ray);

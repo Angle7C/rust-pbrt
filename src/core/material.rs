@@ -1,5 +1,5 @@
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy,Debug,Default)]
 pub struct Material{
     
 }

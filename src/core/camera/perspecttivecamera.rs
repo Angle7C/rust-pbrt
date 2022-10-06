@@ -10,6 +10,7 @@ use crate::{
         medium::Medium,
         ray::{Ray, RayDifferential},
         sample::{CameraSample, Sample},
+        
         spectrum::RGBSpectrum,
     },
     extends::{p_to_v, Mat4, Point2, Point3, Vector3},
@@ -17,7 +18,6 @@ use crate::{
 };
 
 pub struct PerspectiveCamera {
-    // inherited from Camera (see camera.h)
     pub camera_to_world: Transforms,
     pub shutter_open: f64,
     pub shutter_close: f64,
@@ -278,8 +278,6 @@ impl PerspectiveCamera {
 }
 #[cfg(test)]
 mod test {
-    use cgmath::{EuclideanSpace, One};
-
     use crate::{
         core::{
             aabb::Bounds3,

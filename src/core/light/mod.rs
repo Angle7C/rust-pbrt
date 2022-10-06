@@ -3,6 +3,8 @@ use crate::{
     until::transform::Transforms,
 };
 
+use self::pointlight::PointLight;
+
 use super::{interaction::Interaction, medium::Medium, spectrum::RGBSpectrum, scene::Scene, sample::Sampler};
 
 pub mod light;
@@ -42,7 +44,9 @@ impl AreaLight {
     pub fn pdf_le() {}
 }
 pub enum Light {
+    Nil,
     AreaLight(Box<AreaLight>),
+    PointLight(Box<PointLight>),
 }
 impl Light {
     pub fn new() {}
@@ -56,6 +60,7 @@ impl Light {
     ) {
         match self {
             Self::AreaLight(ref v) => AreaLight::sample_li(),
+            _=>unimplemented!()
         }
     }
     pub fn power() {}
@@ -64,6 +69,10 @@ impl Light {
     pub fn le() {}
     pub fn sample_le() {}
     pub fn pdf_le() {}
+
+    pub fn light_to_point(&self)->bool{
+        unimplemented!()
+    }
 }
 
 pub struct VisibilityTester {
@@ -88,5 +97,6 @@ impl VisibilityTester {
     pub fn tr(scene:&Scene,sampler:&Sampler)->RGBSpectrum{
         todo!()
     }
+
 
 }

@@ -1,13 +1,12 @@
+use cgmath::InnerSpace;
 
-use cgmath::{ InnerSpace};
+use crate::{
+    core::spectrum::RGBSpectrum,
+    extends::{Point2, Vector3},
+};
 
-use crate::{core::spectrum::RGBSpectrum, extends::{Vector3, Point2}};
+use super::BxdfType;
 
-pub enum BxdfType {
-    BsdfSpecular,
-    BsdfReflection ,
-
-}
 pub enum Fresnel {
     NoOp(FresnelNoOp),
     Conductor(FresnelConductor),
@@ -41,6 +40,9 @@ pub struct FresnelDielectric {
 impl FresnelDielectric {
     pub fn evaluate(&self, cos_theta_i: f64) -> RGBSpectrum {
         RGBSpectrum::from_value(fr_dielectric(cos_theta_i, self.eta_i, self.eta_t))
+    }
+    pub fn new(eta_i: f64, eta_t: f64) -> Self {
+        Self { eta_i, eta_t }
     }
 }
 pub struct FresnelNoOp {}
@@ -115,24 +117,5 @@ impl SpecularReflection {
             fresnel,
             bxdf_type,
         }
-    }
-    #[inline]
-    pub fn f(_w0:&Vector3,_wi:&Vector3)->RGBSpectrum{
-        RGBSpectrum::from_value(0.0)
-    }
-    #[inline]
-    pub fn sample_f(&self,w0:Vector3,wi:&mut Vector3,_sample:Point2,pdf:&mut f64,_bxdf_type: BxdfType)->RGBSpectrum{
-        *wi=Vector3::new(-w0.x, -w0.y, w0.z);
-        *pdf=1.0;
-        self.r*self.fresnel.evaluate(wi.z)/wi.z.abs()
-    }
-    #[inline]
-    pub fn pdf(_w0:&Vector3,_wi:&Vector3)->f64{
-        unimplemented!()
-    }
-    ///反射向量
-    #[inline]
-    pub fn reflect(wo:&Vector3,n:&Vector3)->Vector3{
-        -*wo+(wo.dot(*n))*n*2.0
     }
 }

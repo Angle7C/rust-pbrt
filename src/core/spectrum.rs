@@ -32,7 +32,7 @@ impl RGBSpectrum {
         let r = (self.rgb[0].sqrt()).clamp(0.0, 1.0) *255.0;
         let g = (self.rgb[1].sqrt()).clamp(0.0, 1.0) *255.0;
         let b = (self.rgb[2].sqrt()).clamp(0.0, 1.0) *255.0;
-        // println!("{} {} {}",r,g,b);
+     
         image::Rgb([r as u8, g as u8 , b as u8])
     }
     pub fn new(r: f64, g: f64, b: f64) -> Self {

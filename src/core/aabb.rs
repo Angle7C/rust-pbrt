@@ -1,4 +1,4 @@
-use std::{mem::swap, ops::Deref};
+use std::{mem::swap};
 
 use crate::extends::{Point3, Vector3};
 

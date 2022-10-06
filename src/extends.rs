@@ -1,12 +1,17 @@
-
-pub type Point3=cgmath::Point3<f64>;
-pub type Vector3=cgmath::Vector3<f64>;
-pub type Point2=cgmath::Point2<f64>;
-pub type Vector2=cgmath::Vector2<f64>;
-pub type  Mat4=cgmath::Matrix4<f64>;
-pub fn p_to_v(p:Point3)->Vector3{
+pub type Point3 = cgmath::Point3<f64>;
+pub type Vector3 = cgmath::Vector3<f64>;
+pub type Point2 = cgmath::Point2<f64>;
+pub type Vector2 = cgmath::Vector2<f64>;
+pub type Mat4 = cgmath::Matrix4<f64>;
+pub fn p_to_v(p: Point3) -> Vector3 {
     Vector3::new(p.x, p.y, p.z)
 }
+pub static ONES: Mat4 = Mat4::new(
+      1.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0, 
+      0.0, 0.0, 0.0, 1.0,
+);
 // use std::ops::{Add, Div, Index, Mul, Neg, Sub};
 
 // use cgmath::{Deg, InnerSpace, Matrix, Rad, SquareMatrix, Transform};
@@ -334,7 +339,7 @@ pub fn p_to_v(p:Point3)->Vector3{
 //         todo!()
 //     }
 //     pub fn perspective(fov:f64,aspect:f64,near:f64,far:f64)->Self{
-    
+
 //         todo!()
 //     }
 // }

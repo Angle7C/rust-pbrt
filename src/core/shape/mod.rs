@@ -1,10 +1,11 @@
-use super::{aabb::Bounds3, ray::Ray};
+use super::{aabb::Bounds3, ray::Ray, interaction::SurfaceInteraction};
 
 pub mod sphere;
+#[derive(Debug)]
 pub enum Shape{
     Sphere(sphere::Sphere),
 }
-impl Shape{
+impl<'a> Shape{
     pub fn object_bound(&self)->Bounds3{
         match  self {
             Self::Sphere(ref sphere)=>{
@@ -25,6 +26,17 @@ impl Shape{
                 t.intersect_p(ray)
             }
         }
+    }
+    pub fn intersect(&self, ray: &mut Ray,isect:&mut SurfaceInteraction<'a>)->bool{
+     
+            match self {
+                Self::Sphere(v)=>{
+                    v.intersect(ray,isect)
+                },
+                _=>unimplemented!()
+            }
+        
+      
     }
 
 }

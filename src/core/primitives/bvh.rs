@@ -148,6 +148,7 @@ impl<'a> BVHNode {
             let (l_indices, r_indices) = buckets_indices.split_at_mut(min_index + 1);
             let l_indices = vector_move_new(l_indices);
             let r_indices = vector_move_new(r_indices);
+            
             let l_child = BVHNode::build(
                 shape,
                 shape_message,
