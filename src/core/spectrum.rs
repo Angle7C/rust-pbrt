@@ -2,9 +2,14 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 enum SpectrumType {
     RGB,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy,Debug)]
 pub struct RGBSpectrum {
     pub rgb: [f64; 3],
+}
+impl Default for RGBSpectrum{
+    fn default() -> Self {
+        Self { rgb: ([0.0,0.0,0.0]) }
+    }
 }
 impl RGBSpectrum {
     pub const MAX: RGBSpectrum = Self {
@@ -47,6 +52,10 @@ impl RGBSpectrum {
         let g = self.rgb[0].sqrt();
         let b = self.rgb[0].sqrt();
         Self::new(r, g, b)
+    }
+    pub fn y(&self) -> f64 {
+        let y_weight: [f64; 3] = [0.212_671, 0.715_160, 0.072_169];
+        y_weight[0] * self.rgb[0] + y_weight[1] * self.rgb[1] + y_weight[2] * self.rgb[2]
     }
 }
 impl Mul<Self> for RGBSpectrum {

@@ -177,7 +177,7 @@ impl Transforms {
         }
         init
     }
-    pub fn perspective(fov: f64, n: f64, f: f64,aspect:f64) -> Transforms {
+    pub fn perspective(fov: f64, n: f64, f: f64,_aspect:f64) -> Transforms {
        let mat4=Mat4::new(
         1.0,0.0,0.0,0.0,
         0.0,1.0,0.0,0.0,

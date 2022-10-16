@@ -4,7 +4,7 @@
 
 use std::f64::consts::PI;
 
-use cgmath::{Deg, EuclideanSpace, InnerSpace, MetricSpace, Rad, Zero};
+use cgmath::{Deg, EuclideanSpace, InnerSpace, MetricSpace, Rad};
 
 use crate::{
     core::{
@@ -164,49 +164,49 @@ impl Sphere {
         let u: f64 = phi / self.phi_max;
         let theta: f64 = f64::clamp(p_hit.z / self.radius, -1.0, 1.0).acos();
         let v: f64 = (theta - self.theta_min) / (self.theta_max - self.theta_min);
-        let z_radius: f64 = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
-        let inv_z_radius: f64 = 1.0 / z_radius;
-        let cos_phi: f64 = p_hit.x * inv_z_radius;
-        let sin_phi: f64 = p_hit.y * inv_z_radius;
-        let dpdu: Vector3 = Vector3 {
-            x: -self.phi_max * p_hit.y,
-            y: self.phi_max * p_hit.x,
-            z: 0.0,
-        };
-        let dpdv: Vector3 = Vector3 {
-            x: p_hit.z * cos_phi,
-            y: p_hit.z * sin_phi,
-            z: -self.radius * theta.sin(),
-        } * (self.theta_max - self.theta_min);
-        let d2_p_duu: Vector3 = Vector3 {
-            x: p_hit.x,
-            y: p_hit.y,
-            z: 0.0,
-        } * -self.phi_max
-            * self.phi_max;
-        let d2_p_duv: Vector3 = Vector3 {
-            x: -sin_phi,
-            y: cos_phi,
-            z: 0.0,
-        } * (self.theta_max - self.theta_min)
-            * p_hit.z
-            * self.phi_max;
-        let d2_p_dvv: Vector3 = Vector3 {
-            x: p_hit.x,
-            y: p_hit.y,
-            z: p_hit.z,
-        } * -(self.theta_max - self.theta_min)
-            * (self.theta_max - self.theta_min);
-        let ec: f64 = dpdu.dot(dpdu);
-        let fc: f64 = dpdu.dot(dpdv);
-        let gc: f64 = dpdv.dot(dpdv);
-        let nc: Vector3 = dpdu.cross(dpdv).normalize();
-        let el: f64 = nc.dot(d2_p_duu);
-        let fl: f64 = nc.dot(d2_p_duv);
-        let gl: f64 = nc.dot(d2_p_dvv);
-        let inv_egf2: f64 = 1.0 / (ec * gc - fc * fc);
-        let dndu = dpdu * (fl * fc - el * gc) * inv_egf2 + dpdv * (el * fc - fl * ec) * inv_egf2;
-        let dndv = dpdu * (gl * fc - fl * gc) * inv_egf2 + dpdv * (fl * fc - gl * ec) * inv_egf2;
+        // let z_radius: f64 = (p_hit.x * p_hit.x + p_hit.y * p_hit.y).sqrt();
+        // let inv_z_radius: f64 = 1.0 / z_radius;
+        // let cos_phi: f64 = p_hit.x * inv_z_radius;
+        // let sin_phi: f64 = p_hit.y * inv_z_radius;
+        // let dpdu: Vector3 = Vector3 {
+        //     x: -self.phi_max * p_hit.y,
+        //     y: self.phi_max * p_hit.x,
+        //     z: 0.0,
+        // };
+        // let dpdv: Vector3 = Vector3 {
+        //     x: p_hit.z * cos_phi,
+        //     y: p_hit.z * sin_phi,
+        //     z: -self.radius * theta.sin(),
+        // } * (self.theta_max - self.theta_min);
+        // let d2_p_duu: Vector3 = Vector3 {
+        //     x: p_hit.x,
+        //     y: p_hit.y,
+        //     z: 0.0,
+        // } * -self.phi_max
+        //     * self.phi_max;
+        // let d2_p_duv: Vector3 = Vector3 {
+        //     x: -sin_phi,
+        //     y: cos_phi,
+        //     z: 0.0,
+        // } * (self.theta_max - self.theta_min)
+        //     * p_hit.z
+        //     * self.phi_max;
+        // let d2_p_dvv: Vector3 = Vector3 {
+        //     x: p_hit.x,
+        //     y: p_hit.y,
+        //     z: p_hit.z,
+        // } * -(self.theta_max - self.theta_min)
+        //     * (self.theta_max - self.theta_min);
+        // let ec: f64 = dpdu.dot(dpdu);
+        // let fc: f64 = dpdu.dot(dpdv);
+        // let gc: f64 = dpdv.dot(dpdv);
+        // let nc: Vector3 = dpdu.cross(dpdv).normalize();
+        // let el: f64 = nc.dot(d2_p_duu);
+        // let fl: f64 = nc.dot(d2_p_duv);
+        // let gl: f64 = nc.dot(d2_p_dvv);
+        // let inv_egf2: f64 = 1.0 / (ec * gc - fc * fc);
+        // let dndu = dpdu * (fl * fc - el * gc) * inv_egf2 + dpdv * (el * fc - fl * ec) * inv_egf2;
+        // let dndv = dpdu * (gl * fc - fl * gc) * inv_egf2 + dpdv * (fl * fc - gl * ec) * inv_egf2;
         let _uv_hit: Point2 = Point2 { x: u, y: v };
         let w0: Vector3 = -ray.d;
         *isect = SurfaceInteraction::new(
@@ -290,7 +290,7 @@ impl Sphere {
             self.get_object_to_world()
                 .applying_vector(p_hit - Point3::origin()),
             None,
-            None,
+            // None,
         );
         true
     }

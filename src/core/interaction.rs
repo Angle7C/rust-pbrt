@@ -35,7 +35,7 @@ impl Interaction {
         w: Vector3,
         normal: Vector3,
         medium: Option<Medium>,
-        surface_interaction: Option<SurfaceInteraction>,
+        // surface_interaction: Option<SurfaceInteraction>,
     ) -> Self {
         Self {
             p: p,
@@ -85,6 +85,11 @@ pub struct SurfaceInteraction<'a> {
     pub bsdf: Option<BSDF>,
     // pub bssrdf: Option<TabulatedBssrdf>,
     pub shape: Option<&'a Shape>,
+}
+impl<'a> Default for SurfaceInteraction<'a>{
+    fn default() -> Self {
+        Self::init()
+    }
 }
 impl<'a> SurfaceInteraction<'a> {
     pub fn init() -> Self {

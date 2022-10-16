@@ -27,13 +27,12 @@ impl<'a> Shape{
             }
         }
     }
-    pub fn intersect(&self, ray: &mut Ray,isect:&mut SurfaceInteraction<'a>)->bool{
+    pub fn intersect(&self, ray: &Ray,isect:&mut SurfaceInteraction<'a>)->bool{
      
             match self {
                 Self::Sphere(v)=>{
                     v.intersect(ray,isect)
                 },
-                _=>unimplemented!()
             }
         
       

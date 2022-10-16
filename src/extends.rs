@@ -12,6 +12,30 @@ pub static ONES: Mat4 = Mat4::new(
       0.0, 0.0, 1.0, 0.0, 
       0.0, 0.0, 0.0, 1.0,
 );
+pub fn point2_min(a:&Point2,b:&Point2)->Point2{
+    let x=if a.x<b.x{a.x}else{b.x};
+    let y=if a.x<b.x{a.y}else{b.y};
+    // let z=if a.x<b.x{a.z}else{b.z};
+    Point2::new(x,y)
+}
+pub fn point2_max(a:&Point2,b:&Point2)->Point2{
+    let x=if a.x>b.x{a.x}else{b.x};
+    let y=if a.x>b.x{a.y}else{b.y};
+    // let z=if a.x<b.x{a.z}else{b.z};
+    Point2::new(x,y)
+}
+pub fn point3_min(a:&Point3,b:&Point3)->Point3{
+    let x=if a.x<b.x{a.x}else{b.x};
+    let y=if a.x<b.x{a.y}else{b.y};
+    let z=if a.x<b.x{a.z}else{b.z};
+    Point3::new(x,y,z)
+}
+pub fn point3_max(a:&Point3,b:&Point3)->Point3{
+    let x=if a.x>b.x{a.x}else{b.x};
+    let y=if a.x>b.x{a.y}else{b.y};
+    let z=if a.x>b.x{a.z}else{b.z};
+    Point3::new(x,y,z)
+}
 // use std::ops::{Add, Div, Index, Mul, Neg, Sub};
 
 // use cgmath::{Deg, InnerSpace, Matrix, Rad, SquareMatrix, Transform};

@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Transform, Zero};
+use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Transform};
 
 use crate::{
     core::{
@@ -13,7 +13,7 @@ use crate::{
     until::transform::Transforms,
 };
 
-use super::{LightType, VisibilityTester};
+use super::{LightType};
 
 pub struct PointLight {
     //世界坐标下
@@ -47,21 +47,10 @@ impl PointLight {
         _u: &Point2,
         wi: &mut Vector3,
         pdf: &mut f64,
-        vis: &mut VisibilityTester,
+        // vis: &mut VisibilityTester,
     ) -> RGBSpectrum {
         *wi = (self.p_light - interaction.p).normalize();
         *pdf = 1.0;
-        *vis = VisibilityTester::new(
-            interaction.clone(),
-            Interaction::new(
-                self.p_light,
-                interaction.time,
-                Vector3::zero(),
-                Vector3::unit_x(),
-                self.medium,
-                None,
-            ),
-        );
         self.spectrum / self.p_light.distance2(interaction.p)
     }
     //点光源的总能量
@@ -131,21 +120,10 @@ impl SpotLight {
         _u: &Point2,
         wi: &mut Vector3,
         pdf: &mut f64,
-        vis: &mut VisibilityTester,
+
     )->RGBSpectrum{
         *wi = (self.p_light - interaction.p).normalize();
         *pdf = 1.0;
-        *vis = VisibilityTester::new(
-            interaction.clone(),
-            Interaction::new(
-                self.p_light,
-                interaction.time,
-                Vector3::zero(),
-                Vector3::unit_x(),
-                self.medium,
-                None
-            ),
-        );
         self.spectrum*self.falloff(&-*wi) / self.p_light.distance2(interaction.p)
     }
     pub fn power(&self)->RGBSpectrum{

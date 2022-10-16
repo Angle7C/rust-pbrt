@@ -2,6 +2,7 @@ pub mod aabb;
 pub mod bssrdf;
 pub mod bxdf;
 pub mod camera;
+pub mod  integrator;
 pub mod film;
 pub mod filter;
 pub mod interaction;

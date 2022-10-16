@@ -4,9 +4,17 @@ use super::Primitive;
 
 pub struct BVH<'a> {
     pub nodelist: Vec<BVHNode>,
-    pub shape_message: &'a Vec<Shape>,
+    pub shape_message: Option<&'a Vec<Shape>>,
 }
-#[derive(Clone,Copy)]
+impl<'a> Default for BVH<'a> {
+    fn default() -> Self {
+        Self {
+            nodelist: vec![],
+            shape_message: None
+        }
+    }
+}
+#[derive(Clone, Copy)]
 
 struct Bucket {
     pub size: f64,
@@ -18,9 +26,9 @@ impl Bucket {
         self.size += 1.0;
         self.aabb = self.aabb.union_bound(&aabb);
     }
-    pub fn add_bucket(&mut self, other: &Bucket){
-        self.size+=other.size;
-        self.aabb=self.aabb.union_bound(&other.aabb);
+    pub fn add_bucket(&mut self, other: &Bucket) {
+        self.size += other.size;
+        self.aabb = self.aabb.union_bound(&other.aabb);
     }
     pub fn init() -> Self {
         Self {
@@ -76,9 +84,8 @@ impl<'a> BVHNode {
         parent: usize,
         depth: usize,
     ) -> usize {
-        
         if indices.len() == 1 {
-            let node_index=nodes.len();
+            let node_index = nodes.len();
             nodes.push(BVHNode::Leaf {
                 parent_index: parent,
                 shape_index: indices[0],
@@ -87,15 +94,16 @@ impl<'a> BVHNode {
             });
             return node_index;
         }
-        let mut message=Bounds3::init();
-        indices.iter().for_each(|x|
-          message=message.union_bound(&shape_message[shape[*x].shape_index].object_world_bound())
-        );
+        let mut message = Bounds3::default();
+        indices.iter().for_each(|x| {
+            message =
+                message.union_bound(&shape_message[shape[*x].shape_index].object_world_bound())
+        });
         let axis = message.max_axis();
         let axis_size = message.diagonal()[axis];
         let node_index = nodes.len();
         nodes.push(BVHNode::default());
-        let (l_aabb, r_aabb, l_index, r_index) = if axis_size<2.0 {
+        let (l_aabb, r_aabb, l_index, r_index) = if axis_size < 2.0 {
             let (l_index, r_index) = indices.split_at(indices.len() / 2);
 
             let l_aabb = get_aabb(l_index, &shape, shape_message);
@@ -106,11 +114,11 @@ impl<'a> BVHNode {
             if r_index.len() == 0 {
                 panic!("r is zero");
             }
-            let l = BVHNode::build(shape, shape_message, l_index, nodes,node_index, depth + 1);
+            let l = BVHNode::build(shape, shape_message, l_index, nodes, node_index, depth + 1);
             let r = BVHNode::build(shape, shape_message, r_index, nodes, node_index, depth + 1);
             (l_aabb, r_aabb, l, r)
         } else {
-            let mut buckets=[Bucket::default();Bucket::BUCKECTSIZE];
+            let mut buckets = [Bucket::default(); Bucket::BUCKECTSIZE];
             let mut buckets_indices: [Vec<usize>; Bucket::BUCKECTSIZE] = Default::default();
             //将所有AABB平均装到BUCKETSIZE个桶里
             for index in indices {
@@ -137,7 +145,8 @@ impl<'a> BVHNode {
                 r_bucket.iter().for_each(|x| {
                     Bucket::add_bucket(&mut r_b, x);
                 });
-                let cost_t = (l_b.size * l_b.aabb.area() + r_b.size * r_b.aabb.area()) / message.area();
+                let cost_t =
+                    (l_b.size * l_b.aabb.area() + r_b.size * r_b.aabb.area()) / message.area();
                 if cost > cost_t {
                     cost = cost_t;
                     min_index = i;
@@ -148,7 +157,7 @@ impl<'a> BVHNode {
             let (l_indices, r_indices) = buckets_indices.split_at_mut(min_index + 1);
             let l_indices = vector_move_new(l_indices);
             let r_indices = vector_move_new(r_indices);
-            
+
             let l_child = BVHNode::build(
                 shape,
                 shape_message,
@@ -264,18 +273,25 @@ impl<'a> BVH<'a> {
         BVHNode::build(shape, shape_message, &indices, &mut nodes, 0, 0);
         Self {
             nodelist: (nodes),
-            shape_message: (shape_message),
+            shape_message: (Some(shape_message)),
         }
     }
+    #[allow(non_snake_case)]
     pub fn hit_BVH(&self, ray: &Ray, shape: &Vec<Primitive>) -> Option<Vec<usize>> {
-        let mut ans = Vec::new();
-        let ray=
-        BVHNode::hit(&self.nodelist, ray, shape, self.shape_message, &mut ans, 0);
-        if ans.len() != 0 {
-            Some(ans)
-        } else {
-            None
+        match self.shape_message {
+            None=>None,
+            Some(v)=>{
+                let mut ans = Vec::new();
+                BVHNode::hit(&self.nodelist, ray, shape, v, &mut ans, 0);
+                if ans.len() != 0 {
+                    Some(ans)
+                } else {
+                    None
+                }        
+            }
         }
+
+        
     }
 }
 fn get_aabb(list: &[usize], shape: &[Primitive], shape_message: &Vec<Shape>) -> Bounds3 {
@@ -291,80 +307,4 @@ fn vector_move_new(vec: &mut [Vec<usize>]) -> Vec<usize> {
         t.append(i);
     }
     t
-}
-#[cfg(test)]
-mod test {
-    use std::time::Instant;
-
-    use crate::{
-        core::{
-            aabb::Bounds3,
-            camera::perspecttivecamera::PerspectiveCamera,
-            film::Film,
-            primitives::{bvh::BVH, Primitive},
-            shape::{sphere::Sphere, Shape},
-            spectrum::RGBSpectrum,
-        },
-        extends::{Mat4, Point2, Point3, Vector3},
-        until::transform::Transforms,
-    };
-
-    #[test]
-    fn bvh() {
-        const size: usize = 12_000;
-        let mut list: Vec<Primitive> = Vec::with_capacity(size);
-        let mut shapes: Vec<Shape> = Vec::with_capacity(size);
-
-        for i in 0..size {
-            let x = rand::random::<f64>() * 1000.0;
-            let y = rand::random::<f64>() * 1000.0;
-            // println!("{}",y);
-            let sphere = Sphere::new(
-                Mat4::from_translation(Vector3::new(x,y,0.0)),
-                false,
-                0.5,
-                -1.0,
-                1.0,
-                360.0,
-            );
-            shapes.push(Shape::Sphere(sphere));
-            list.push(Primitive::new(i, None, None, None));
-        }
-        let t1=Instant::now();
-        let bvh = BVH::build(&mut list, &shapes);
-        println!("{:?}",t1.elapsed());
-
-        let film = Film::new(Point2::new(500.0, 500.0), "test_bvh.png");
-        let mut camera = PerspectiveCamera::new(
-            Transforms::look_at_lh(
-                Point3::new(0.0, 0.0, 5.0),
-                Point3::new(0.0, 0.0, 0.0),
-                Vector3::unit_y(),
-            ),
-            Bounds3::new(Point3::new(-1.0, -1.0, 0.0), Point3::new(1.0, 1.0, 0.0)),
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            90.0,
-            film,
-            None,
-            0.0,
-        );
-        while let Some(t) = camera.next_camsample() {
-            let ray = camera.generate_ray(&t);
-            match bvh.hit_BVH(&ray, &list) {
-                None => continue,
-                Some(li) => {
-                    for i in li {
-                        if shapes[list[i].shape_index].intersect_p(&ray) {
-                            camera.set_pixel(&t, RGBSpectrum::new(255.0, 0.0, 0.0));
-                            break;
-                        }
-                    }
-                }
-            };
-        }
-        camera.film.output_image()
-    }
 }

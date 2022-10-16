@@ -2,6 +2,9 @@
 use crate::extends::Point2;
 use cgmath::EuclideanSpace;
 use rand::Rng;
+
+use super::CameraSample;
+#[derive(Debug,Clone)]
 pub struct StratifiedSampler {
     pub samples_per_pixel: i64,
     x_pixel_samples: i32,
@@ -180,7 +183,7 @@ impl StratifiedSampler {
         self.current_pixel_sample_index < self.samples_per_pixel
     }
     pub fn reseed(&mut self, _seed: u64) {
-        // self.rng.shuffle(seed);
+        self.rng=rand::thread_rng();
         unimplemented!()
     }
     pub fn get_current_pixel(&self) -> Point2 {
@@ -192,6 +195,11 @@ impl StratifiedSampler {
     pub fn get_samples_per_pixel(&self) -> i64 {
         self.samples_per_pixel
     }
+    pub fn get_camera_sample(&mut self,p: Point2)->CameraSample{
+        let d=self.get_2d();
+        let p=Point2::new(p.x+d.x,p.y+d.y);
+        CameraSample::new_all(p, self.get_1d(),self.get_2d())
+    }
 }
 //在[0,1]采样nSample个点,每个点相对中心随机偏移
 fn stratified_sample_1d(
@@ -201,7 +209,7 @@ fn stratified_sample_1d(
     jitter: bool,
 ) {
     let inv_n_sample = 1.0 / n_samples as f64;
-    let mut delta = 0.0;
+    let mut delta;
     for item in 0..n_samples {
         delta = if jitter { rng.next_f64() } else { 0.5 };
         sampe[item as usize] = f64::min((item as f64 + delta) * inv_n_sample, f64::MAX);
@@ -221,8 +229,7 @@ fn latin_hypercube(samples: &mut [Point2], n_samples: u32, rng: &mut rand::Threa
             }
         }
     }
-    //在[0,1][0,1]采样nSample个点,每个点相对中心随机偏移
-   
+    rng.shuffle(samples);
 }
 fn stratified_sample_2d(
     sampe: &mut [Point2],
@@ -233,14 +240,14 @@ fn stratified_sample_2d(
 ) {
     let dx = 1.0 / n_x as f64;
     let dy = 1.0 / n_y as f64;
-    let mut delta_x = 0.0;
-    let mut delta_y = 0.0;
+    let mut delta_x ;
+    let mut delta_y ;
     for i in 0..n_x as usize {
         for j in 0..n_y as usize {
             delta_x = if jitter { rng.next_f64() } else { 0.5 };
             delta_y = if jitter { rng.next_f64() } else { 0.5 };
-            sampe[i * n_x as usize + j].x = ((i as f64 + delta_x) * delta_x).min(f64::MAX);
-            sampe[i * n_x as usize + j].y = ((j as f64 + delta_y) * delta_y).min(f64::MAX);
+            sampe[i * n_x as usize + j].x = ((i as f64 + delta_x) * dx).min(f64::MAX);
+            sampe[i * n_x as usize + j].y = ((j as f64 + delta_y) * dy).min(f64::MAX);
         }
     }
 }

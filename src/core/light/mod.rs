@@ -1,11 +1,13 @@
 use crate::{
     extends::{Point2, Vector3},
-    until::transform::Transforms,
 };
 
 use self::pointlight::PointLight;
 
-use super::{interaction::Interaction, medium::Medium, spectrum::RGBSpectrum, scene::Scene, sample::Sampler};
+use super::{
+    interaction::SurfaceInteraction,
+    spectrum::RGBSpectrum,
+};
 
 pub mod light;
 pub mod pointlight;
@@ -23,45 +25,23 @@ impl LightType {
         }
     }
 }
-pub struct AreaLight {
-    //指示光源的基本类型
-    pub flags: LightType,
-    //描述光源内部的介质
-    pub medium: Option<Medium>,
-    //与世界坐标系的关系
-    light_to_world: Transforms,
-    //用来区域光源，用于光源采样
-    nsample: i32,
-}
-impl AreaLight {
-    pub fn new() {}
-    pub fn sample_li() {}
-    pub fn power() {}
-    pub fn preprocess() {}
-    pub fn pdf_li() {}
-    pub fn le() {}
-    pub fn sample_le() {}
-    pub fn pdf_le() {}
-}
 pub enum Light {
     Nil,
-    AreaLight(Box<AreaLight>),
     PointLight(Box<PointLight>),
 }
+//光源的强度分布。
+pub enum LightDistribution {}
 impl Light {
     pub fn new() {}
     pub fn sample_li(
         &self,
-        interaction: &Interaction,
-        u: &Point2,
-        wi: &Vector3,
-        pdf: &mut f64,
-        vis: bool,
-    ) {
-        match self {
-            Self::AreaLight(ref v) => AreaLight::sample_li(),
-            _=>unimplemented!()
-        }
+        _interaction: &SurfaceInteraction,
+        _u: &Point2,
+        _wi: &mut Vector3,
+        _pdf: &mut f64,
+        // vis: &mut VisibilityTester,
+    ) -> RGBSpectrum {
+        unimplemented!()
     }
     pub fn power() {}
     pub fn preprocess() {}
@@ -70,33 +50,7 @@ impl Light {
     pub fn sample_le() {}
     pub fn pdf_le() {}
 
-    pub fn light_to_point(&self)->bool{
+    pub fn light_to_point(&self) -> bool {
         unimplemented!()
     }
-}
-
-pub struct VisibilityTester {
-    p0: Interaction,
-    p1: Interaction,
-}
-impl VisibilityTester {
-    #[inline]
-    pub fn new(p0: Interaction, p1: Interaction) -> Self {
-        Self { p0: p0, p1: p1 }
-    }
-    pub fn get_po(&self)->&Interaction{
-        &self.p0
-    }
-    pub fn get_p1(&self)->&Interaction{
-        &self.p1
-    }
-    //确定两点之间的可见性
-    pub fn unoccluded(scene:&Scene)->bool{
-        todo!()
-    }
-    pub fn tr(scene:&Scene,sampler:&Sampler)->RGBSpectrum{
-        todo!()
-    }
-
-
 }

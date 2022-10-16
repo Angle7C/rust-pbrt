@@ -1,8 +1,6 @@
-use cgmath::InnerSpace;
 
 use crate::{
     core::spectrum::RGBSpectrum,
-    extends::{Point2, Vector3},
 };
 
 use super::BxdfType;

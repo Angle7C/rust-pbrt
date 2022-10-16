@@ -1,8 +1,53 @@
 use self::stratifiedsampler::StratifiedSampler;
 
 pub mod stratifiedsampler;
+#[derive(Debug)]
 pub enum Sampler{
-    Stratified(StratifiedSampler)
+    Stratified(StratifiedSampler),
+    Nil
+}
+unsafe impl Sync for Sampler{
+    
+}
+unsafe impl Send for Sampler{
+    
+}
+impl Sampler{
+    pub fn clone_with_seed(&self)->Self{
+        match self {
+            Sampler::Stratified(s)=>{
+                Sampler::Stratified(s.clone())
+            },
+            _=>unimplemented!()
+        }
+    }
+    pub fn start_pixel(&mut self,pixel:Point2){
+        match self {
+            Sampler::Stratified(s)=>{
+               s.start_pixel(pixel);
+            },
+            _=>unimplemented!()
+        }
+    }
+    pub fn start_next_sample(&mut self)->bool{
+        unimplemented!()
+    }
+    pub fn reseed(&mut self,code:u64){
+        match self {
+            Sampler::Stratified(v)=>v.reseed(code),
+            _=>unimplemented!(),
+        }
+    }
+    pub fn get_camera_sample(&mut self,p:Point2)->CameraSample{
+        match self {
+            Self::Stratified(v)=>{
+                let d=v.get_2d();
+                let p=Point2::new(p.x+d.x,p.y+d.y);
+                CameraSample::new(p,v.get_1d())
+            },
+            _=>unimplemented!()
+        }
+    }
 }
 use std::f64::consts::PI;
 

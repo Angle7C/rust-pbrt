@@ -1,5 +1,7 @@
 // see perspective.h
 
+use std::sync::Arc;
+
 use cgmath::{EuclideanSpace, InnerSpace, SquareMatrix, Transform};
 
 use crate::{
@@ -21,7 +23,7 @@ pub struct PerspectiveCamera {
     pub camera_to_world: Transforms,
     pub shutter_open: f64,
     pub shutter_close: f64,
-    pub film: Film,
+    pub film: Arc<Film>,
     pub medium: Option<Medium>,
     pub raster_to_camera: Transforms,
     pub lens_radius: f64,
@@ -30,7 +32,6 @@ pub struct PerspectiveCamera {
     pub dy_camera: Vector3,
     pub a: f64,
     clipping_start: f64, // ADDED
-    index: u32,
 }
 
 impl PerspectiveCamera {
@@ -111,7 +112,7 @@ impl PerspectiveCamera {
             camera_to_world,
             shutter_open,
             shutter_close,
-            film,
+            film:Arc::new(film),
             medium,
             raster_to_camera: Transforms::new(raster_to_camera),
             lens_radius,
@@ -120,7 +121,6 @@ impl PerspectiveCamera {
             dy_camera,
             a,
             clipping_start,
-            index: 0,
         }
     }
     pub fn generate_ray_differential(&self, sample: &CameraSample, ray: &mut Ray) -> f64 {
@@ -238,8 +238,8 @@ impl PerspectiveCamera {
     pub fn get_shutter_close(&self) -> f64 {
         self.shutter_close
     }
-    pub fn get_film(&self) -> Film {
-        todo!();
+    pub fn get_film(&self) -> Arc<Film> {
+        self.film.clone()
     }
     // ADDED
     pub fn get_clipping_start(&self) -> f64 {
@@ -259,79 +259,5 @@ impl PerspectiveCamera {
         ray.o = Point3::origin();
         ray.d = (p_camera - Point3::origin()).normalize();
         self.camera_to_world.applying_ray(&ray)
-    }
-    pub fn next_camsample(&mut self) -> Option<CameraSample> {
-        if self.index >= self.film.get_width() * self.film.get_height() {
-            return None;
-        }
-        let x = self.index / self.film.get_width();
-        let y = self.index % self.film.get_width();
-        self.index += 1;
-
-        let sample = CameraSample::new(Point2::new(x as f64, y as f64), 0.0);
-        Some(sample)
-    }
-    pub fn set_pixel(&mut self, sample: &CameraSample, rgb: RGBSpectrum) {
-        self.film
-            .set_pixel(sample.p_film.x as u32, sample.p_film.y as u32, &rgb)
-    }
-}
-#[cfg(test)]
-mod test {
-    use crate::{
-        core::{
-            aabb::Bounds3,
-            film::{Film},
-            shape::sphere::Sphere,
-            spectrum::RGBSpectrum,
-        },
-        until::transform::Transforms,
-    };
-
-    use super::PerspectiveCamera;
-    use crate::extends::*;
-
-    #[test]
-    fn test_perspective() {
-        let film = Film::new(Point2::new(200.0, 200.0), "test_camera.png");
-        let mut camera = PerspectiveCamera::new(
-            Transforms::look_at_lh(
-                Point3::new(0.0, 0.0, 2.0),
-                Point3::new(0.0, 0.0, 0.0),
-                Vector3::unit_y(),
-            ),
-            Bounds3::new(Point3::new(-1.0, -1.0, 0.0), Point3::new(1.0, 1.0, 0.0)),
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-            90.0,
-            film,
-            None,
-            0.0,
-        );
-        let sphere = Sphere::new(
-            Mat4::from_translation(Vector3::new(2.0, 0.0, 0.0)),
-            false,
-            1.0,
-            -1.0,
-            1.0,
-            360.0,
-        );
-        while let Some(t) = camera.next_camsample() {
-            let ray = camera.generate_ray(&t);
-            // let ray = Ray::new(
-            //     Point3::new(
-            //         t.p_film.x / camera.film.get_width() as f64,
-            //         t.p_film.y / camera.film.get_height() as f64,
-            //         0.0,
-            //     ),
-            //     Vector3::unit_z(),
-            // );
-            if sphere.intersect_p(&ray) {
-                camera.set_pixel(&t, RGBSpectrum::new(255.0, 0.0, 0.0));
-            };
-        }
-        camera.film.output_image()
     }
 }
