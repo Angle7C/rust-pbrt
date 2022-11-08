@@ -1,21 +1,28 @@
+
+pub mod light;
+pub mod pointlight;
+pub mod light_strategy;
 use crate::{
     extends::{Point2, Vector3},
 };
 
-use self::pointlight::PointLight;
+use self::{pointlight::PointLight, light_strategy::UnifomrStrategy};
 
 use super::{
-    interaction::SurfaceInteraction,
-    spectrum::RGBSpectrum,
+    interaction::{SurfaceInteraction, Interaction},
+    spectrum::RGBSpectrum, scene::{self, Scene},
 };
 
-pub mod light;
-pub mod pointlight;
 pub enum LightType {
     DeltaPosition = 1,
     DeltaDirection = 2,
     Area = 4,
     Infinite = 8,
+}
+#[derive(Debug,Clone, Copy)]
+pub enum TransportMode{
+    Radiance,
+    Importance
 }
 impl LightType {
     pub fn is_delta(&self) -> bool {
@@ -29,19 +36,41 @@ pub enum Light {
     Nil,
     PointLight(Box<PointLight>),
 }
-//光源的强度分布。
-pub enum LightDistribution {}
+//光源的采样策略
+pub enum LightDistribution {
+    Uniform(UnifomrStrategy),
+
+}
+unsafe impl Sync for LightDistribution{
+
+}
+#[derive(Default)]
+pub struct VisibilityTester<'a,'b>{
+    pub p0 :Option<&'a Interaction>,
+    pub p1 :Option<&'b Interaction>,
+}
+impl<'a,'b>VisibilityTester<'a,'b>{
+    pub fn unocclued(&self,scene:&Scene)->bool{
+        let mut ray=self.p0.unwrap().spawn_ray(self.p1.unwrap());
+        !scene.intersect_p(&mut ray)
+    }
+}
+
 impl Light {
     pub fn new() {}
     pub fn sample_li(
         &self,
-        _interaction: &SurfaceInteraction,
-        _u: &Point2,
-        _wi: &mut Vector3,
-        _pdf: &mut f64,
-        // vis: &mut VisibilityTester,
+        interaction: &Interaction,
+        light_interaction:&mut Interaction,
+        u: &Point2,
+        wi: &mut Vector3,
+        pdf: &mut f64,
+        vis: &mut VisibilityTester,
     ) -> RGBSpectrum {
-        unimplemented!()
+        match self {
+            Self::PointLight(v)=>v.sample_li(&interaction,light_interaction, u, wi, pdf,vis),
+            Self::Nil=>unimplemented!(),
+        }
     }
     pub fn power() {}
     pub fn preprocess() {}

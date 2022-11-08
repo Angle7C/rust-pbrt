@@ -10,10 +10,10 @@ use crate::{
         spectrum::{RGBSpectrum},
     },
     extends::{Mat4, Point2, Point3, Vector3},
-    until::transform::Transforms,
+    until::{transform::Transforms, untils::{uniform_sample_phere, uniform_sample_sphere_pdf}},
 };
 
-use super::{LightType};
+use super::{LightType, VisibilityTester};
 
 pub struct PointLight {
     //世界坐标下
@@ -40,15 +40,20 @@ impl PointLight {
             // nsample: 0,
         }
     }
-    //在某一点上的功率
+    //采样点光源
     pub fn sample_li(
         &self,
         interaction: &Interaction,
+        light_interaction:&mut Interaction,
         _u: &Point2,
         wi: &mut Vector3,
         pdf: &mut f64,
-        // vis: &mut VisibilityTester,
+        vis: &mut VisibilityTester,
     ) -> RGBSpectrum {
+        vis.p0=Some(interaction);
+        light_interaction.p=self.p_light;
+        light_interaction.time=interaction.time;
+        vis.p1=Some(light_interaction);
         *wi = (self.p_light - interaction.p).normalize();
         *pdf = 1.0;
         self.spectrum / self.p_light.distance2(interaction.p)
@@ -62,18 +67,24 @@ impl PointLight {
         unimplemented!()
     }
     pub fn sample_le(
-        _u1: &Point2,
-        _u2: Point2,
-        _time: f64,
-        _ray: &mut Ray,
-        _normal: Vector3,
-        _pdf_pos: &mut f64,
-        _pdf_dir: &mut f64,
+        &self,
+        u1: &Point2,
+        _u2: &Point2,
+        time: f64,
+        ray: &mut Ray,
+        normal: &mut Vector3,
+        pdf_pos: &mut f64,
+        pdf_dir: &mut f64,
     ) -> RGBSpectrum {
-        unimplemented!()
+        *ray=Ray::new_all(self.p_light,uniform_sample_phere(u1),f64::INFINITY,time,self.medium,None);
+        *normal=ray.d;
+        *pdf_pos=1.0;
+        *pdf_dir=uniform_sample_sphere_pdf();
+        self.spectrum
     }
-    pub fn pdf_le(_ray: &Ray, _normal: &Vector3, _pdf_pos: &mut f64, _pdf: &mut f64) {
-        unimplemented!()
+    pub fn pdf_le(_ray: &Ray, _normal: &Vector3, pdf_pos: &mut f64, pdf: &mut f64) {
+        *pdf_pos=0.0;
+        *pdf=uniform_sample_sphere_pdf();
     }
 }
 pub struct SpotLight {

@@ -34,8 +34,16 @@ impl<'a> Shape{
                     v.intersect(ray,isect)
                 },
             }
-        
-      
+    }
+    pub fn reverse_orientation(&self)->bool{
+        match self {
+            Self::Sphere(v)=>v.reverse_orientation
+        }
+    }
+    pub fn transform_swaps_handedness(&self)->bool{
+        match self {
+            Self::Sphere(v)=>v.get_transform_swaps_handedness()
+        }
     }
 
 }

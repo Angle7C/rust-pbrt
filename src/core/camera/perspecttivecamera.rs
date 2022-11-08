@@ -1,6 +1,6 @@
 // see perspective.h
 
-use std::sync::Arc;
+use std::{sync::Arc, f64::consts::PI};
 
 use cgmath::{EuclideanSpace, InnerSpace, SquareMatrix, Transform};
 
@@ -12,7 +12,6 @@ use crate::{
         medium::Medium,
         ray::{Ray, RayDifferential},
         sample::{CameraSample, Sample},
-        
         spectrum::RGBSpectrum,
     },
     extends::{p_to_v, Mat4, Point2, Point3, Vector3},
@@ -67,9 +66,9 @@ impl PerspectiveCamera {
             -screen_window.max.y,
             0.0,
         ));
-        let screen_to_raster = scale1*scale2 * translate;
+        let screen_to_raster = scale1 * scale2 * translate;
         let raster_to_screen = screen_to_raster.invert().unwrap();
-        
+
         // let raster_to_screen = screen_to_raster.invert().unwrap();
         let raster_to_camera = camera_to_screen.inv_trans * raster_to_screen;
 
@@ -112,7 +111,7 @@ impl PerspectiveCamera {
             camera_to_world,
             shutter_open,
             shutter_close,
-            film:Arc::new(film),
+            film: Arc::new(film),
             medium,
             raster_to_camera: Transforms::new(raster_to_camera),
             lens_radius,
@@ -212,10 +211,35 @@ impl PerspectiveCamera {
         *ray = self.camera_to_world.applying_ray(&in_ray);
         1.0
     }
-    pub fn we(&self, _ray: &Ray, _p_raster2: Option<&mut Point2>) -> RGBSpectrum {
-        // interpolate camera matrix and check if $\w{}$ is forward-facing
-        todo!()
+    //相机采样
+    pub fn we(&self, ray: &Ray, p_raster2: Option<&mut Point2>) -> RGBSpectrum {
+        //将矩阵对时间插值
+        let c2w = self.camera_to_world;
+        let cos_theta = ray.d.dot(c2w.applying_vector(Vector3::unit_z()));
+        if cos_theta < 0.0 {
+            return RGBSpectrum::default();
+        }
+        let p_focus = ray.at(if self.lens_radius > 0.0 {
+            self.focal_distance
+        } else {
+            1.0
+        } / cos_theta);
+        let p_raster = self
+            .raster_to_camera
+            .applying_point_inv(c2w.applying_point_inv(p_focus));
+        let sample = self.film.get_sample_bounds();
+        if p_raster.x < sample.min.x
+            || p_raster.x > sample.max.x
+            || p_raster.y < sample.min.y
+            || p_raster.y > sample.max.y
+        {
+            return RGBSpectrum::default();
+        }
+        let area =if self.lens_radius!=0.0{PI*self.lens_radius*self.lens_radius}else{1.0};
+        let cos2_theta=cos_theta*cos_theta;
+        RGBSpectrum::from_value(1.0 /(self.a*area*cos2_theta*cos2_theta))
     }
+    //相机重要性采样
     pub fn pdf_we(&self, _ray: &Ray) -> (f64, f64) {
         todo!();
     }

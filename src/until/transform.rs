@@ -1,9 +1,9 @@
 use std::ops::Mul;
 
-use cgmath::{Matrix, Rad, SquareMatrix, Transform, Deg};
+use cgmath::{Matrix, Rad, SquareMatrix, Transform, Deg, InnerSpace};
 
 use crate::{
-    core::{aabb::Bounds3, ray::Ray},
+    core::{aabb::Bounds3, ray::Ray, interaction::SurfaceInteraction},
     extends::{Mat4, Point3, Vector3},
 };
 #[derive(Clone, Debug, Copy)]
@@ -16,7 +16,7 @@ impl Default for Transforms {
         Self::IDENTITY
     }
 }
-impl Transforms {
+impl<'a> Transforms {
     pub const IDENTITY: Self = Self {
         trans: cgmath::Matrix4 {
             x: cgmath::Vector4 {
@@ -177,8 +177,29 @@ impl Transforms {
         }
         init
     }
-    pub fn perspective(fov: f64, n: f64, f: f64,_aspect:f64) -> Transforms {
-       let mat4=Mat4::new(
+    pub fn applying_interaction(self,isect:&SurfaceInteraction<'a>)->SurfaceInteraction<'a>{
+        let mut ans=isect.clone();
+        // SurfaceInteraction::default();    
+        ans.p=self.applying_point(isect.p);
+        ans.normal=self.applying_normal(isect.normal).normalize();
+        ans.wo=self.applying_vector(isect.wo);
+        ans.dpdu=self.applying_vector(isect.dpdu);
+        ans.dpdv=self.applying_vector(isect.dpdv);
+        ans.dndu=self.applying_vector(isect.dndu);
+        ans.dndv=self.applying_vector(isect.dndv);
+        ans.shading.n=self.applying_normal(isect.shading.n).normalize();
+        ans.shading.dndu=self.applying_normal(isect.shading.dndu);
+        ans.shading.dndv=self.applying_normal(isect.shading.dndv);
+        ans.shading.dpdu=self.applying_normal(isect.shading.dpdu);
+        ans.shading.dpdv=self.applying_normal(isect.shading.dpdv);
+        ans.dpdx=self.applying_vector(isect.dpdx);
+        ans.dpdy=self.applying_vector(isect.dpdy);
+        ans.normal=if ans.normal.dot(ans.shading.n)>0.0{ans.normal}else{-ans.normal};
+        ans.shading.n=if ans.normal.dot(ans.shading.n)>0.0{ans.shading.n}else{-ans.shading.n};
+        ans
+
+    }
+    pub fn perspective(fov: f64, n: f64, f: f64,_aspect:f64) -> Transforms {       let mat4=Mat4::new(
         1.0,0.0,0.0,0.0,
         0.0,1.0,0.0,0.0,
         0.0,0.0,f/(f-n),1.0,

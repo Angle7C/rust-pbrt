@@ -1,11 +1,10 @@
-
-use cgmath::{EuclideanSpace, Zero, InnerSpace};
+use cgmath::{EuclideanSpace, InnerSpace, Zero};
 
 use crate::extends::{Point3, Vector3};
 
 use super::medium::Medium;
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Ray {
     /// origin
     pub o: Point3,
@@ -26,7 +25,7 @@ impl Default for Ray {
             d: Vector3::zero(),
             t_max: f64::INFINITY,
             time: 0.0,
-            medium:None,
+            medium: None,
             differential: None,
         }
     }
@@ -36,13 +35,30 @@ impl Ray {
     pub fn at(&self, t: f64) -> Point3 {
         self.o + self.d * t
     }
-    pub fn new(o:Point3,v:Vector3)->Self{
+    pub fn new_all(
+        o: Point3,
+        d: Vector3,
+        t_max: f64,
+        time: f64,
+        medium: Option<Medium>,
+        differential: Option<RayDifferential>,
+    ) -> Self {
+        Self {
+            o,
+            d,
+            t_max,
+            time,
+            medium,
+            differential,
+        }
+    }
+    pub fn new(o: Point3, v: Vector3) -> Self {
         Self {
             o: o,
             d: v.normalize(),
             t_max: f64::INFINITY,
             time: 0.0,
-            medium:None,
+            medium: None,
             differential: None,
         }
     }

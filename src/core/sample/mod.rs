@@ -48,6 +48,14 @@ impl Sampler{
             _=>unimplemented!()
         }
     }
+    pub fn get_1d(mut self)->f64{
+        match self {
+            Self::Stratified(v)=>{
+                v.get_1d()
+            },
+            _=>unimplemented!()
+        }
+    }
 }
 use std::f64::consts::PI;
 

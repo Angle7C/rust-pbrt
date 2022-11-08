@@ -6,6 +6,7 @@ use crate::extends::{ Point3};
 use crate::core::bxdf::BxdF;
 use self::bvh::BVH;
 
+use super::light::TransportMode;
 use super::{
     aabb::Bounds3,
    
@@ -60,6 +61,12 @@ impl Primitive {
     }
     pub fn get_material(&self) -> Option<&Rc<Material>>{
         unimplemented!()
+    }
+    pub fn compute_scattering_functions(&self,isect:&mut SurfaceInteraction,
+    mode:TransportMode,
+    multips_lobes:bool,
+    ){
+        unimplemented!();
     }
 }
 impl Default for Primitive {
